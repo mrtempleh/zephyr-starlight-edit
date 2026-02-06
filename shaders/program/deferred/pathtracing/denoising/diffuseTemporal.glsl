@@ -23,7 +23,7 @@ layout (location = 0) out vec4 filteredData;
 void main ()
 {   
     #ifdef DIFFUSE_HALF_RES
-        ivec2 offsetCoord = 2 * ivec2(gl_FragCoord.xy) + checker2x2(frameCounter);
+        ivec2 offsetCoord = clamp(2 * ivec2(gl_FragCoord.xy) + checker2x2(frameCounter), ivec2(0), ivec2(renderSize) - 1);
         vec2 uv = (offsetCoord + 0.5) * texelSize;
     #else
         ivec2 offsetCoord = ivec2(gl_FragCoord.xy);

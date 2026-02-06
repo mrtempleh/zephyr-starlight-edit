@@ -61,6 +61,8 @@
                                     specularData.a = max(0.008, pow(dot(albedo.rgb, vec3(0.28, 0.66, 0.0)), 2.6) * 80.0 / 255.0);
                                     albedo.rgb *= smoothstep(0.0, 0.3, albedoLum);
                                 } else {
+                                    specularData.r = 0.9 * albedoLum + 0.75;
+                                    specularData.g = 0.02;
                                     specularData.a = max(0.008, pow(dot(albedo.rgb, vec3(0.54, 0.0, 0.34)), 4.5) * 220.0 / 255.0);
                                     albedo.rgb *= smoothstep(0.0, 0.24, albedoLum);
                                 }
@@ -253,6 +255,7 @@
                             if (blockId < 38) {
                                 if (blockId < 37) {
                                     specularData.a = pow(dot(albedo.rgb, vec3(0.5, 0.18, 0.34)), 3.2) * 110.0 / 255.0;
+                                    specularData.r = 0.0;
                                 } else {
                                     if (albedo.r > 0.89) {
                                         specularData.a = pow(dot(albedo.rgb, vec3(0.9, 0.23, 0.11)), 2.1) * 90.0 / 255.0;
@@ -281,12 +284,12 @@
                                     specularData.r = max(albedo.r * 0.6 + albedo.g * 0.2 + 0.26, 0.55);
                                     specularData.g = 1.0;
                                 } else {
-                                    specularData.r = albedo.b * albedo.b * albedo.b * 0.8 + 0.2;
+                                    specularData.r = albedo.b * albedo.b * albedo.b * 0.8 + 0.3;
                                     specularData.g = albedo.b * albedo.b * 0.2;
                                 }
                             } else {
                                 if (blockId < 43) {
-                                    specularData.r = max(albedoLum * 0.7 + 0.17, 0.51);
+                                    specularData.r = max(albedoLum * 0.7 + 0.2, 0.51);
                                     specularData.g = 1.0;
                                     albedo *= albedoLum * 0.6 + 0.4;
                                 } else {
@@ -534,8 +537,8 @@
                         } else {
                             if (blockId < 86) {
                                 if (blockId < 85) {
-                                    albedo = vec3(1.0);
-                                    specularData = vec4(1.0, 1.0, 0.0, 0.0);
+                                    specularData.r = 0.9 * albedoLum + 0.75;
+                                    specularData.g = 0.02;
                                 } else {
                                     specularData.r = 0.25 * albedoLum * albedoLum;
                                     specularData.g = 0.015 * albedoLum;

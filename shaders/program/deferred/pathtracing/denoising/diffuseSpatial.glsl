@@ -70,16 +70,17 @@
             vec2 samplePos = gl_FragCoord.xy + (dither * 0.66 - 1.0) * sampleDir;
             for (int i = 0; i < 3; i++, samplePos += 0.66 * sampleDir) 
         #endif
-        {
+        {   
+            ivec2 sampleTexel = ivec2(samplePos);
             #ifdef DIFFUSE_HALF_RES
-                ivec2 sampleCoord = 2 * ivec2(samplePos) + checker2x2(frameCounter);
+                ivec2 sampleCoord = 2 * sampleTexel + checker2x2(frameCounter);
             #else
-                ivec2 sampleCoord = ivec2(samplePos);
+                ivec2 sampleCoord = sampleTexel;
             #endif
 
             if (clamp(sampleCoord, ivec2(0), ivec2(renderSize) - 1) == sampleCoord) {
                 #ifdef DIFFUSE_HALF_RES
-                    vec4 sampleData = texelFetch(colortex2, ivec2(samplePos), 0);
+                    vec4 sampleData = texelFetch(colortex2, clamp(sampleTexel, ivec2(0), ivec2(floor(renderSize * 0.5)) - 1), 0);
                 #else
                     vec4 sampleData = texelFetch(colortex2, sampleCoord, 0);
                 #endif
@@ -91,7 +92,7 @@
                     float sampleWeight = exp(-temporalWeight * (
                           DENOISER_NORMAL_WEIGHT * (-dot(sampleNormal, currNormal) * 0.5 + 0.5)
                         + DENOISER_DEPTH_WEIGHT * abs(dot(geoNormal, posDiff))
-                        + 0.005 * DENOISER_SHARPENING * length(sampleDir) * abs(log2(sampleData.r + sampleData.g + sampleData.b) - currLogLum)
+                        + 0.005 * DENOISER_SHARPENING * length(sampleDir) * min(abs(log2(sampleData.r + sampleData.g + sampleData.b) - currLogLum), 3.0)
                         )
                     );
 

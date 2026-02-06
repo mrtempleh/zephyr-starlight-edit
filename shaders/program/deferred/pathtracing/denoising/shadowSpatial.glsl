@@ -67,7 +67,7 @@
 
             float sampleWeight = exp(-temporalWeight * (
                   DENOISER_DEPTH_WEIGHT * abs(dot(geoNormal, currPos.xyz - samplePos.xyz))
-                + 0.25 * length(sampleDir) * pow(abs(sqr(luminance(sampleData.rgb)) - currLum), 0.2))
+                + 0.3 * length(sampleDir) * pow(abs(sqr(luminance(sampleData.rgb)) - currLum), 0.2))
             );
 
             weights += sampleWeight;

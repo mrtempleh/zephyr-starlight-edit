@@ -61,15 +61,16 @@
             for (int i = 0; i < 3; i++, samplePos += 0.66 * sampleDir) 
         #endif
         {
+            ivec2 sampleTexel = ivec2(samplePos);
             #ifdef REFLECTION_HALF_RES
-                ivec2 sampleCoord = 2 * ivec2(samplePos) + checker2x2(frameCounter);
+                ivec2 sampleCoord = 2 * sampleTexel + checker2x2(frameCounter);
             #else
-                ivec2 sampleCoord = ivec2(samplePos);
+                ivec2 sampleCoord = sampleTexel;
             #endif
 
             if (clamp(sampleCoord, ivec2(0), ivec2(renderSize) - 1) == sampleCoord) {
                 #ifdef REFLECTION_HALF_RES
-                    vec4 sampleData = texelFetch(colortex2, ivec2(samplePos), 0);
+                    vec4 sampleData = texelFetch(colortex2, clamp(sampleTexel, ivec2(0), ivec2(floor(renderSize * 0.5)) - 1), 0);
                 #else
                     vec4 sampleData = texelFetch(colortex2, sampleCoord, 0);
                 #endif
@@ -83,7 +84,7 @@
                           DENOISER_DEPTH_WEIGHT * abs(dot(mat.geoNormal, currPos.xyz - samplePos.xyz))
                         + DENOISER_NORMAL_WEIGHT * (-dot(sampleNormal, mat.textureNormal) * 0.5 + 0.5)
                         + abs(mat.roughness - sampleRoughness)
-                        + 0.0065 * exp(-16.0 * mat.roughness) * length(sampleDir) * abs(log2(sampleData.r + sampleData.g + sampleData.b) - currLogLum)
+                        + 0.0035 * exp(-16.0 * mat.roughness) * length(sampleDir) * min(abs(log2(sampleData.r + sampleData.g + sampleData.b) - currLogLum), 4.0)
                         )
                     );
 

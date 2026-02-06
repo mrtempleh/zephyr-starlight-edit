@@ -55,6 +55,7 @@
     uniform vec3 playerLookVector;
     uniform vec3 cameraVelocity;
     uniform vec3 cameraPosition;
+    uniform vec3 cameraMod16;
     uniform vec3 voxelOffset;
     uniform vec3 shadowDir;
     uniform vec3 moonDir;

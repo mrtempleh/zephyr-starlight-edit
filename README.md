@@ -61,3 +61,7 @@ Unlike (almost) all other path traced shaders for Minecraft, this one uses a com
 * Breaking blocks in caves shows light leaking for a split second. This is unavoidable now.
 * In some cases, parts of the terrain will fail to voxelize. Increasing Triangle and Voxel Array Size usually fixes it.
 * ~~TAA produces a lot of ghosting on smooth reflections in movement. It might be possible to improve on this by using a reflection virtual depth buffer for TAA reprojection.~~
+
+## License
+
+* This project is available under the [Creative Commons BY-NC-SA 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en) license. [View full license text](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.txt)

@@ -38,11 +38,12 @@ layout (local_size_x = 8, local_size_y = 8) in;
 
 void main ()
 {
-    uint state = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * uint(renderSize.x / 2.0) + uint(renderSize.x / 2.0) * uint(renderSize.y / 2.0) * (frameCounter & 1023u);
     #ifdef DIFFUSE_HALF_RES
-        ivec2 offsetCoord = ivec2(gl_GlobalInvocationID.xy) * 2 + checker2x2(frameCounter);
+        ivec2 offsetCoord = min(ivec2(gl_GlobalInvocationID.xy) * 2 + checker2x2(frameCounter), ivec2(renderSize) - 1);
+        uint state = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * uint(renderSize.x / 2.0) + uint(renderSize.x / 2.0) * uint(renderSize.y / 2.0) * (frameCounter & 1023u);
     #else
         ivec2 offsetCoord = ivec2(gl_GlobalInvocationID.xy);
+        uint state = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * uint(renderSize.x) + uint(renderSize.x) * uint(renderSize.y) * (frameCounter & 1023u);
     #endif
 
     float depth = texelFetch(depthtex1, offsetCoord, 0).x;
@@ -110,17 +111,13 @@ void main ()
                 #if SUNLIGHT_GI_QUALITY == 0
                     sunlight *= smoothstep(0.0, 0.75, distGradient) * query.directIrradiance;
                 #elif SUNLIGHT_GI_QUALITY == 1
-                    if (randomValue(state) > smoothstep(0.5, 1.0, distGradient) && (clamp(query.directIrradiance, vec3(0.01), vec3(0.99)) == query.directIrradiance)) {
-                        sunlight *= TraceShadowRay(Ray(diffuseRay.origin + diffuseRay.direction * rt.dist + rt.normal * 0.003, dir), 1024.0, true).rgb;
+                    if (randomValue(state) > smoothstep(0.5, 1.0, distGradient)) {
+                        sunlight *= TraceShadowRay(Ray(diffuseRay.origin + diffuseRay.direction * rt.dist + rt.normal * 0.003, dir), SHADOW_MAX_RT_DISTANCE, true).rgb;
                     } else {
                         sunlight *= query.directIrradiance;
                     }
                 #elif SUNLIGHT_GI_QUALITY == 2
-                    if (clamp(query.directIrradiance, vec3(0.01), vec3(0.99)) == query.directIrradiance) {
-                        sunlight *= TraceShadowRay(Ray(diffuseRay.origin + diffuseRay.direction * rt.dist + rt.normal * 0.003, dir), 1024.0, true).rgb;
-                    } else {
-                        sunlight *= query.directIrradiance;
-                    }
+                    sunlight *= TraceShadowRay(Ray(diffuseRay.origin + diffuseRay.direction * rt.dist + rt.normal * 0.003, dir), SHADOW_MAX_RT_DISTANCE, true).rgb;
                 #endif
 
                 radiance += sunlight;

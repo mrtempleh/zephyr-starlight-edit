@@ -19,16 +19,14 @@
 
             for (int i = 0; i < 4; i++) {
                 ivec2 offset = ivec2(i & 1, i >> 1);
-                ivec2 sampleCoord = ivec2(texel) + offset;
-                ivec2 sampleTexel = sampleCoord * INDIRECT_LIGHTING_RES
+                ivec2 sampleCoord = clamp(ivec2(texel) + offset, ivec2(0), ivec2(floor(renderSize * rcp(INDIRECT_LIGHTING_RES))) - 1);
+                ivec2 sampleTexel = clamp(sampleCoord * INDIRECT_LIGHTING_RES
                     #if INDIRECT_LIGHTING_RES == 2
                         + checker2x2(frameCounter - 1)
                     #elif INDIRECT_LIGHTING_RES == 4
                         + checker4x4(frameCounter - 1)
                     #endif
-                    ;
-                
-                if (clamp(sampleTexel, ivec2(0), ivec2(renderSize) - 1) != sampleTexel) continue;
+                , ivec2(0), ivec2(renderSize) - 1);
 
                 vec4 sampleData = texelFetch(tex, sampleCoord, 0);
 
@@ -58,13 +56,13 @@
                 for (int i = 0; i < 4; i++) {
                     ivec2 offset = ivec2(i & 1, i >> 1);
                     ivec2 sampleCoord = ivec2(uv) + offset;
-                    ivec2 texel = INDIRECT_LIGHTING_RES * sampleCoord 
+                    ivec2 texel = clamp(INDIRECT_LIGHTING_RES * sampleCoord 
                         #if INDIRECT_LIGHTING_RES == 2
                             + checker2x2(frameCounter)
                         #elif INDIRECT_LIGHTING_RES == 4
                             + checker4x4(frameCounter)
                         #endif
-                    ;
+                    , ivec2(0), ivec2(renderSize) - 1);
 
                     vec3 sampleNormal = octDecode(unpack2x8(texelFetch(colortex9, texel, 0).x & 65535u));
                     vec3 sampleData = texelFetch(colortex2, sampleCoord, 0).rgb;

@@ -5,6 +5,8 @@
 #include "/include/pbr.glsl"
 #include "/include/main.glsl"
 #include "/include/textureData.glsl"
+#include "/include/surface.glsl"
+#include "/include/spaceConversion.glsl"
 
 uniform float alphaTestRef = 0.1;
 
@@ -15,8 +17,12 @@ in VSOUT
     vec2 texcoord;
     vec3 vertexColor;
 
-    #ifdef NORMAL_MAPPING
+    #if defined NORMAL_MAPPING || defined POM
         vec4 vertexTangent;
+    #endif
+
+    #ifdef POM
+        vec4 texBounds;
     #endif
 
     flat uint vertexNormal;
@@ -31,26 +37,66 @@ void main ()
 {
     if (any(greaterThan(gl_FragCoord.xy, screenSize))) discard;
 
-    vec2 atlasTexCoord = vec2(textureSize(gtexture, 0)) * vsout.texcoord;
-    float mipLevel = max(0.0, TAA_MIP_SCALE * 0.5 * log2(max(lengthSquared(dFdx(atlasTexCoord)), lengthSquared(dFdy(atlasTexCoord)))));
+    vec2 texSize = vec2(textureSize(gtexture, 0));
+    vec2 atlasTexCoord = texSize * vsout.texcoord;
 
-    vec4 albedo = textureLod(gtexture, vsout.texcoord, mipLevel) * vec4(vsout.vertexColor, 1.0);
-
-    #ifdef SPECULAR_MAPPING
-        vec4 specularData = textureLod(specular, vsout.texcoord, 0.0);
+    #if defined POM && defined STAGE_TERRAIN
+        float mipLevel = floor(0.5 + max(0.0, TAA_MIP_SCALE * 0.5 * log2(max(lengthSquared(dFdx(atlasTexCoord)), lengthSquared(dFdy(atlasTexCoord))))));
     #else
-        vec4 specularData = vec4(0.0);
+        float mipLevel = max(0.0, TAA_MIP_SCALE * 0.5 * log2(max(lengthSquared(dFdx(atlasTexCoord)), lengthSquared(dFdy(atlasTexCoord)))));
     #endif
 
     vec3 geoNormal = octDecode(unpack2x16(vsout.vertexNormal));
 
     if (!gl_FrontFacing) geoNormal *= -1.0;
 
+    #if defined POM || defined NORMAL_MAPPING
+        mat3 tbnMatrix = tbnNormalTangent(geoNormal, vsout.vertexTangent);
+    #endif
+
+    #if defined POM && defined STAGE_TERRAIN
+        vec3 rayDir = (screenToPlayerPos(vec3(gl_FragCoord.xy * texelSize, gl_FragCoord.z)).xyz - screenToPlayerPos(vec3(gl_FragCoord.xy * texelSize, 0.0)).xyz) * tbnMatrix;
+
+        float mipScale    = exp2(-mipLevel);
+        float invMipScale = exp2(mipLevel);
+
+        POMHitResult hr = tracePOM(vec3(atlasTexCoord * mipScale, 0.0), rayDir, ivec4(vsout.texBounds * mipScale + 0.5), int(mipLevel), mipScale);
+        vec2 hitUv = wrap(hr.hitPos.xy * invMipScale, vsout.texBounds) / texSize;
+
+        vec4 albedo = textureLod(gtexture, hitUv, mipLevel) * vec4(vsout.vertexColor, 1.0);
+
+        #ifdef SPECULAR_MAPPING
+            vec4 specularData = textureLod(specular, hitUv, 0.0);
+        #else
+            vec4 specularData = vec4(0.0);
+        #endif
+    #else
+        vec4 albedo = textureLod(gtexture, vsout.texcoord, mipLevel) * vec4(vsout.vertexColor, 1.0);
+
+        #ifdef SPECULAR_MAPPING
+            vec4 specularData = textureLod(specular, vsout.texcoord, 0.0);
+        #else
+            vec4 specularData = vec4(0.0);
+        #endif
+    #endif
+    
     #ifdef NORMAL_MAPPING
-        vec3 textureNormal = vec3(textureLod(normals, vsout.texcoord, mipLevel).rg * 2.0 - 1.0, 1.0);
-        textureNormal.xy *= step(vec2(rcp(128.0)), abs(textureNormal.xy));
-        textureNormal.z = sqrt(max(0.0, 1.0 - lengthSquared(textureNormal.xy)));
-        textureNormal = tbnNormalTangent(geoNormal, vsout.vertexTangent) * textureNormal;
+        #if defined POM && defined STAGE_TERRAIN
+            vec3 textureNormal;
+
+            if (hr.normal.z > 0.5) {
+                textureNormal = vec3(textureLod(normals, hitUv, mipLevel).rg * 2.0 - 1.0, 1.0);
+                textureNormal.xy *= step(vec2(rcp(128.0)), abs(textureNormal.xy));
+                textureNormal.z = sqrt(max(0.0, 1.0 - lengthSquared(textureNormal.xy)));
+            } else {
+                textureNormal = hr.normal;
+            }
+        #else
+            vec3 textureNormal = vec3(textureLod(normals, vsout.texcoord, mipLevel).rg * 2.0 - 1.0, 1.0);
+            textureNormal.xy *= step(vec2(rcp(128.0)), abs(textureNormal.xy));
+            textureNormal.z = sqrt(max(0.0, 1.0 - lengthSquared(textureNormal.xy)));
+        #endif
+        textureNormal = tbnMatrix * textureNormal;
     #else
         vec3 textureNormal = geoNormal;
     #endif
@@ -78,6 +124,7 @@ void main ()
 #ifdef vsh
 
 attribute vec2 mc_Entity;
+attribute vec4 mc_midTexCoord;
 attribute vec4 at_tangent;
 
 out VSOUT
@@ -85,8 +132,12 @@ out VSOUT
     vec2 texcoord;
     vec3 vertexColor;
 
-    #ifdef NORMAL_MAPPING
+    #if defined NORMAL_MAPPING || defined POM
         vec4 vertexTangent;
+    #endif
+
+    #ifdef POM
+        vec4 texBounds;
     #endif
 
     flat uint vertexNormal;
@@ -108,7 +159,7 @@ void main ()
     vsout.vertexColor = gl_Color.rgb;
     vsout.vertexNormal = pack2x16(octEncode(alignNormal(transpose(mat3(gbufferModelView)) * gl_NormalMatrix * gl_Normal, 0.008)));
 
-    #ifdef NORMAL_MAPPING
+    #if defined NORMAL_MAPPING || defined POM
         vsout.vertexTangent = vec4(alignNormal(mat3(gbufferModelViewInverse) * mat3(gl_ModelViewMatrix) * at_tangent.xyz, 0.025), at_tangent.w);
     #endif
 
@@ -121,6 +172,12 @@ void main ()
     #elif defined STAGE_BLOCK_ENTITIES
         vsout.blockId = uint(blockEntityId);
     #endif
+
+    #ifdef POM
+        vec2 midTexCoord = mat4x2(gl_TextureMatrix[0]) * mc_midTexCoord;
+        vsout.texBounds = vec4(textureSize(gtexture, 0).xyxy) * vec4(midTexCoord - abs(midTexCoord - vsout.texcoord), midTexCoord + abs(midTexCoord - vsout.texcoord));
+    #endif
 }
 
 #endif
+

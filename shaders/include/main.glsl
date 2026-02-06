@@ -22,10 +22,17 @@
         bool isHand;
     };
 
+    #ifdef POM
+        struct POMHitResult {
+            vec3 hitPos;
+            vec3 normal;
+        };
+    #endif
+
     struct RayHitInfo 
     {
         vec4 albedo;
-        vec4 specularData;
+        vec4 specular;
         vec3 normal;
         vec3 F0;
         float roughness;
@@ -125,7 +132,6 @@
 
     layout (std430, binding = 5) buffer render_state
     {
-        mat4 gbufferPreviousModelViewProjectionInverse;
         float globalLuminance;
     } renderState;
 
@@ -141,10 +147,10 @@
 
     #ifdef STAGE_BEGIN
         layout (r11f_g11f_b10f) uniform image2D imgSkyView;
-        layout (rg16f) uniform image2D imgCaustic;
+        layout (rg16f) uniform image2D imgWaterNormal;
     #else
         uniform sampler2D texSkyView;
-        uniform sampler2D texCaustic;
+        uniform sampler2D texWaterNormal;
     #endif
 
     uint addVoxel (ivec3 voxel, uint data)

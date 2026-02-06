@@ -1,3 +1,19 @@
+# v0.2.1
+
+Changes over v0.2:
+* Improved the look of water waves on flowing water
+* Fixed lighting issues with Half Res Trace enabled and screen resolution not a multiple of 2
+* Fixed the Shadow Trace Distance option not working
+* Added Parallax Occlusion Mapping (POM)
+* Added new options:
+  * Water > Reflected Caustics: Simulates how sunlight reflects off of the water, casting light onto surfaces from which the sun reflection would be visible.
+  * Terrain > Parallax Occlusion Mapping:
+    * POM Depth: Depth multiplier in blocks.
+    * POM Steps: Maximum amount of steps used for ray marching. Increase this if you are having issues with POM dissapearing at grazing angles.
+    * Texture Resolution: Set this to the resolution of the resource pack you're using for correct depth.
+* Tweaked chromatic aberration to blur the image less
+* Fixed NaN issue when setting Water Wave Height or Water Wave Frequency to 0.0
+
 # v0.2
 
 Changes over v0.1.3:

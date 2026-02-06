@@ -22,7 +22,7 @@ layout (location = 0) out vec4 filteredData;
 void main ()
 {   
     #ifdef REFLECTION_HALF_RES
-        ivec2 offsetCoord = 2 * ivec2(gl_FragCoord.xy) + checker2x2(frameCounter);
+        ivec2 offsetCoord = clamp(2 * ivec2(gl_FragCoord.xy) + checker2x2(frameCounter), ivec2(0), ivec2(renderSize) - 1);
         vec2 uv = (offsetCoord + 0.5) * texelSize;
     #else
         ivec2 offsetCoord = ivec2(gl_FragCoord.xy);
@@ -39,11 +39,11 @@ void main ()
     if (mat.roughness > REFLECTION_ROUGHNESS_THRESHOLD) return;
 
     vec4 playerPos = screenToPlayerPos(vec3(uv, depth));
-    vec3 virtualPos = playerPos.xyz + step(0.125, filteredData.w) * normalize(playerPos.xyz - screenToPlayerPos(vec3(uv, 0.0)).xyz) * filteredData.w;
+    vec3 virtualPos = playerPos.xyz + normalize(playerPos.xyz - screenToPlayerPos(vec3(uv, 0.0)).xyz) * filteredData.w;
 
     vec4 prevUv = projectAndDivide(gbufferPreviousModelViewProjection, virtualPos + cameraVelocity);
     #if !defined TAA && defined TEMPORAL_PREFILTERING
-        prevUv.xyz = (prevUv.xyz + vec3(texelSize * (R2(frameCounter & 7u) - 0.5), 0.0)) * 0.5 + 0.5;
+        prevUv.xyz = (prevUv.xyz + vec3(texelSize * (R2(frameCounter & 63u) - 0.5), 0.0)) * 0.5 + 0.5;
     #else
         prevUv.xyz = (prevUv.xyz + vec3(taaOffsetPrev, 0.0)) * 0.5 + 0.5;
     #endif

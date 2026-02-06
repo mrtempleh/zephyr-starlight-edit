@@ -38,34 +38,39 @@
         return result * 0.5;
     }
 
-    float getWaterWaveHeight (vec3 worldPos)
+    float calcWaterHeight (vec3 worldPos)
     {
-        vec3 coord = vec3(worldPos.xz, frameTimeCounter * WATER_WAVE_SPEED);
+        vec3 coord = vec3(worldPos.xz + vec2(0.3, 0.4) * worldPos.y, mod(frameTimeCounter * WATER_WAVE_SPEED, 4096.0));
 
         float f1 = fbm(mat3x2(0.5, 1.6, 0.2, -0.9, 0.5, 0.6) * coord);
         float f2 = fbm(mat3x2(0.3, 1.8, -0.6, 0.9, -1.0, 0.1) * coord);
 
-        return sqr(mix(f1, f2, 0.5));
+        return 0.25 * sqr(f1 + f2);
     }
 
-    vec3 getWaterWaveNormal (vec3 worldPos)
+    vec3 calcWaterNormal (vec3 worldPos)
     {
-        vec3 offsetCoord = worldPos + vec3(WATER_WAVE_SHARPNESS * getWaterWaveHeight(worldPos) / WATER_WAVE_FREQUENCY, 0.0, 0.0);
+        vec3 offsetCoord = worldPos + vec3(WATER_WAVE_TURBULENCE * rcp(max(WATER_WAVE_FREQUENCY, 0.0001)) * calcWaterHeight(worldPos), 0.0, 0.0);
 
-        float centerHeight = getWaterWaveHeight(offsetCoord);
+        float centerHeight = calcWaterHeight(offsetCoord);
 
-        float dfdx = getWaterWaveHeight(offsetCoord + vec3(0.0005, 0.0, 0.0));
-        float dfdz = getWaterWaveHeight(offsetCoord + vec3(0.0, 0.0, 0.0005));
+        float dfdx = calcWaterHeight(offsetCoord + vec3(0.0005, 0.0, 0.0));
+        float dfdz = calcWaterHeight(offsetCoord + vec3(0.0, 0.0, 0.0005));
 
-        return vec3(rcp(0.0005) * (vec2(dfdx, dfdz) - centerHeight), rcp(WATER_WAVE_HEIGHT));
+        return vec3(rcp(0.0005) * (vec2(dfdx, dfdz) - centerHeight), rcp(max(WATER_WAVE_HEIGHT, 0.0001)));
     }
 
     #ifndef STAGE_BEGIN
-        vec3 getWaterWaveNormalTex (vec3 worldPos)
+        vec3 sampleWaterNormal (vec3 worldPos)
         {
-            vec2 uv = fract(worldPos.xz * rcp(32.0) + 0.5);
-            return vec3(texture(texCaustic, uv).rg, rcp(WATER_WAVE_HEIGHT));
+            vec2 uv = fract((worldPos.xz + vec2(0.3, 0.4) * worldPos.y) * rcp(64.0) + 0.5);
+            return vec3(texture(texWaterNormal, uv).rg, rcp(max(WATER_WAVE_HEIGHT, 0.0001)));
+        }
+  
+        float calcWaterCaustics (vec3 playerPos, vec3 rayDir, float dist)
+        {
+            return exp(WATER_CAUSTICS_STRENGTH * rayDir.y * 32.0 * min(log(dist + 1.0), 4.0) * (dot(rayDir, normalize(sampleWaterNormal(playerPos + cameraPosition).xzy)) - rayDir.y));
         }
     #endif
-    
+
 #endif

@@ -1,3 +1,3 @@
 #version 430 compatibility
 
-#include "/program/deferred/pathtracing/applySpecular.glsl"
+#include "/program/deferred/pathtracing/applyReflections.glsl"

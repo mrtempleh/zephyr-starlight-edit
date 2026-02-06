@@ -41,6 +41,26 @@ void main ()
         if (!hideGUI) diffuseIrradiance = irradianceCacheView(currPos, mat.geoNormal).diffuseIrradiance;
     #endif
 
+    #ifdef WATER_REFLECTED_CAUSTICS
+        Ray ray = Ray(currPos, vec3(shadowDir.x, -shadowDir.y, shadowDir.z));
+        
+        if (dot(ray.direction, mat.geoNormal) > -0.0001) {
+            RayHitInfo rt = TraceGenericRay(ray, 1024.0, true, false);
+            vec3 hitPos = ray.origin + ray.direction * rt.dist + rt.normal * 0.005;
+
+            if (rt.blockId == 10100) {
+                diffuseIrradiance += schlickFresnel(vec3(WATER_REFLECTANCE), shadowDir.y) * TraceShadowRay(Ray(hitPos, shadowDir), SHADOW_MAX_RT_DISTANCE, true) * calcWaterCaustics(hitPos, ray.direction, rt.dist) * lightTransmittance(shadowDir) * evalCookBRDF(
+                    normalize(ray.direction + mat.geoNormal * 0.03125), 
+                    normalize(currPos), 
+                    mat.roughness, 
+                    mat.textureNormal, 
+                    mat.albedo.rgb, 
+                    mat.F0
+                ) / max(mat.albedo.rgb, vec3(0.0001));
+            }
+        }
+    #endif
+
     if (mat.roughness <= REFLECTION_ROUGHNESS_THRESHOLD) diffuseIrradiance *= 1.0 - schlickFresnel(mat.F0, dot(mat.textureNormal, normalize(screenToPlayerPos(vec3(gl_FragCoord.xy * texelSize, 0.0)).xyz - currPos)));
 
     color.rgb = EXPONENT_BIAS * mat.albedo.rgb * diffuseIrradiance;

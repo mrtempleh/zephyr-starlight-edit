@@ -114,7 +114,6 @@ void main ()
                         vec3 nextDir = refract(refractRay.direction, refraction.normal, refraction.blockId == 10100 ? (medium ? WATER_IOR : rcp(WATER_IOR)) : (medium ? GLASS_IOR : rcp(GLASS_IOR)));
 
                         if (
-                            (!mat.isHand && medium && nextDir == vec3(0.0) && mat.blockId == 99) || 
                             #if defined GLASS_REFRACTION && defined WATER_REFRACTION
                                 refraction.blockId == 99 || refraction.blockId == 10100
                             #elif defined GLASS_REFRACTION
@@ -134,7 +133,7 @@ void main ()
                                 medium = !medium;
                             }
                         } else {
-                            IrradianceSum r = sampleReflectionLighting(hitPos, refraction.normal, blueNoise(vec2(texel)).rg, 0.45);
+                            IrradianceSum r = sampleReflectionLighting(hitPos, refraction.normal, blueNoise(vec2(texel)).rg, 0.4995);
 
                             refractColor += throughput * (refraction.albedo.rgb * refraction.emission + refraction.albedo.rgb * r.diffuseIrradiance + lightTransmittance(shadowDir) * lightBrightness * r.directIrradiance * evalCookBRDF(normalize(shadowDir + refraction.normal * 0.03125), refractRay.direction, refraction.roughness, refraction.normal, refraction.albedo.rgb, refraction.F0));
                         }
@@ -163,7 +162,7 @@ void main ()
         refractColor.rgb *= viewTransmittance;
     }
 
-    imageStore(colorimg13, texel, vec4(max(virtualDepth, rt.hit ? playerToScreenPos(rayPos.xyz + rayDir * rt.dist).z : 0.0), 0.0, 0.0, 1.0));
+    imageStore(colorimg13, texel, vec4(playerToScreenPos(rayPos.xyz + rayDir * rt.dist).z, 0.0, 0.0, 1.0));
     imageStore(colorimg7, texel, vec4(EXPONENT_BIAS * mix(
         refractColor.rgb * transmittance, 
         rayColor, 

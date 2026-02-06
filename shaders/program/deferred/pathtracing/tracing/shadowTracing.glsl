@@ -73,7 +73,7 @@ void main ()
                     vec2(randomValue(state), randomValue(state))
                 #endif
             );
-            shadowMask += TraceShadowRay(shadowRay, 1024.0, true).rgb;
+            shadowMask += TraceShadowRay(shadowRay, SHADOW_MAX_RT_DISTANCE, true).rgb;
         }
 
         shadowMask *= rcp(SHADOW_SAMPLES);

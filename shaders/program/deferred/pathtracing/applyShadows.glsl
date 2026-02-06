@@ -27,7 +27,5 @@ void main ()
 
     vec3 brdf = evalCookBRDF(normalize(shadowDir + mat.geoNormal * 0.03125), normalize(screenToPlayerPos(vec3(gl_FragCoord.xy * texelSize, depth)).xyz - screenToPlayerPos(vec3(gl_FragCoord.xy * texelSize, 0.0)).xyz), max(0.1, mat.roughness), mat.textureNormal, mat.albedo.rgb, mat.F0);
 
-    //if (luminance(brdf) > 0.001) {
-        color.rgb += EXPONENT_BIAS * texelFetch(colortex2, texel, 0).rgb * lightBrightness * brdf * lightTransmittance(shadowDir);
-    //}
+    color.rgb += EXPONENT_BIAS * texelFetch(colortex2, texel, 0).rgb * lightBrightness * brdf * lightTransmittance(shadowDir);
 }

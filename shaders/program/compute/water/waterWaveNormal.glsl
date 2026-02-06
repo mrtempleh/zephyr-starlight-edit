@@ -16,8 +16,9 @@ const ivec3 workGroups = ivec3(64, 64, 1);
 
 void main ()
 {
-    vec2 pos = rcp(16.0) * vec2(gl_GlobalInvocationID.xy) + 16.0;
-    vec2 result = getWaterWaveNormal(vec3(pos.x, 0.0, pos.y)).xy;
+    vec2 pos = rcp(8.0) * vec2(gl_GlobalInvocationID.xy) - 32.0;    
 
-    imageStore(imgCaustic, ivec2(gl_GlobalInvocationID.xy), vec4(any(greaterThan(abs(result), vec2(1.0))) ? vec2(0.0) : result, 0.0, 1.0));
+    vec2 result = calcWaterNormal(vec3(pos.x, 0.0, pos.y)).xy;
+
+    imageStore(imgWaterNormal, ivec2(gl_GlobalInvocationID.xy), vec4(any(greaterThan(abs(result), vec2(1.0))) ? vec2(0.0) : result, 0.0, 1.0));
 }

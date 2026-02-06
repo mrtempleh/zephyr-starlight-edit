@@ -45,6 +45,4 @@ void main ()
         color.rgb = mix(pow(1.0 - exp(-exposure * color.rgb), vec3(1.0 / 2.2)), pow(1.0 - exp(-exposure * sharpen.rgb / sharpen.w), vec3(1.0 / 2.2)), -SHARPENING) + blueNoise(gl_FragCoord.xy) * rcp(255.0) - rcp(510.0);
         color.a = 1.0;
     #endif
-
-    //color.rg = getWaterWaveNormalTex(screenToPlayerPos(vec3(gl_FragCoord.xy * texelSize, texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).r)).xyz + cameraPosition).rg;
 }

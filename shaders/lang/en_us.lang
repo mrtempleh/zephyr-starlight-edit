@@ -3,14 +3,14 @@ profile.FAST  = §cFast
 
 option.MAIN_TITLE = Zephyr Starlight
 
-value.MAIN_TITLE.0 = §dv0.2
-value.MAIN_TITLE.1 = §cv0.2
-value.MAIN_TITLE.2 = §6v0.2
-value.MAIN_TITLE.3 = §ev0.2
-value.MAIN_TITLE.4 = §av0.2
-value.MAIN_TITLE.5 = §bv0.2
-value.MAIN_TITLE.6 = §9v0.2
-value.MAIN_TITLE.7 = §5v0.2
+value.MAIN_TITLE.0 = §dv0.2.1
+value.MAIN_TITLE.1 = §cv0.2.1
+value.MAIN_TITLE.2 = §6v0.2.1
+value.MAIN_TITLE.3 = §ev0.2.1
+value.MAIN_TITLE.4 = §av0.2.1
+value.MAIN_TITLE.5 = §bv0.2.1
+value.MAIN_TITLE.6 = §9v0.2.1
+value.MAIN_TITLE.7 = §5v0.2.1
 
 screen.PATH_TRACING    = Path Tracing
 screen.ATMOSPHERICS    = Atmosphere & Lighting
@@ -119,7 +119,16 @@ option.GLASS_OPACITY          = Glass Opacity
 option.WATER_ABSORPTION_R     = Water Absorption (R)
 option.WATER_ABSORPTION_G     = Water Absorption (G)
 option.WATER_ABSORPTION_B     = Water Absorption (B)
-option.WATER_REFLECTANCE      = Water Reflectance 
+option.WATER_REFLECTANCE      = Water Reflectance
+
+screen.TERRAIN_REFRACTION      = Refraction
+
+screen.TERRAIN_POM             = Parallax Occlusion Mapping
+
+option.POM                     = Enabled
+option.POM_DEPTH               = POM Depth
+option.POM_STEPS               = POM Steps
+option.POM_TEXTURE_RES         = Texture Resolution
 
 screen.TERRAIN_IPBR            = Integrated PBR
 
@@ -137,14 +146,15 @@ screen.TERRAIN_WATER           = Water
 option.WATER_WAVE_HEIGHT       = Wave Height
 option.WATER_WAVE_FREQUENCY    = Wave Frequency
 option.WATER_WAVE_SPEED        = Wave Speed
-option.WATER_WAVE_SHARPNESS    = Wave Sharpness
+option.WATER_WAVE_TURBULENCE   = Wave Turbulence
 
-option.WATER_CAUSTICS          = Water Caustics
-option.WATER_CAUSTICS_STRENGTH = Caustic Strength
+option.WATER_REFRACTED_CAUSTICS = Refracted Caustics
+option.WATER_REFLECTED_CAUSTICS = Reflected Caustics
+option.WATER_CAUSTICS_STRENGTH  = Caustic Strength
 
-option.TAA = Enable TAA
-option.TAA_UPSCALING_FACTOR = TAAU Render Scale
-suffix.TAA_UPSCALING_FACTOR = %
+option.TAA                    = TAA
+option.TAA_UPSCALING_FACTOR   = TAAU Render Scale
+suffix.TAA_UPSCALING_FACTOR   = %
 
 option.TAA_JITTER_SCALE       = TAA Jitter Scale
 option.TAA_ACCUMULATION_LIMIT = Max Frames

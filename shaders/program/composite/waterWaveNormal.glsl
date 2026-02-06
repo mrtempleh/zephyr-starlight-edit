@@ -37,7 +37,7 @@ void main ()
     vec3 playerPos = screenToPlayerPos(vec3(uv, depth)).xyz;
 
     vec3 worldPos = cameraPosition + playerPos;
-    vec3 normal = tbnNormal(mat.normal) * getWaterWaveNormal(worldPos);
+    vec3 normal = tbnNormal(mat.normal) * calcWaterNormal(worldPos);
 
     if (dot(screenToPlayerPos(vec3(uv, depth1)).xyz - playerPos, normal) < 0.0) imageStore(colorimg1, ivec2(gl_GlobalInvocationID.xy), uvec4(packUnorm4x8(mat.albedo), mat.blockId | (pack2x8(octEncode(normal)) << 16u), 0u, 1u));
 }

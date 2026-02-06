@@ -39,11 +39,12 @@ layout (local_size_x = 8, local_size_y = 8) in;
 
 void main ()
 {
-    uint state = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * uint(renderSize.x / 2.0) + uint(renderSize.x / 2.0) * uint(renderSize.y / 2.0) * (frameCounter & 1023u);
     #ifdef REFLECTION_HALF_RES
-        ivec2 offsetCoord = ivec2(gl_GlobalInvocationID.xy) * 2 + checker2x2(frameCounter);
+        ivec2 offsetCoord = min(ivec2(gl_GlobalInvocationID.xy) * 2 + checker2x2(frameCounter), ivec2(renderSize) - 1);
+        uint state = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * uint(renderSize.x / 2.0) + uint(renderSize.x / 2.0) * uint(renderSize.y / 2.0) * (frameCounter & 1023u);
     #else
         ivec2 offsetCoord = ivec2(gl_GlobalInvocationID.xy);
+        uint state = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * uint(renderSize.x) + uint(renderSize.x) * uint(renderSize.y) * (frameCounter & 1023u);
     #endif
 
     float depth = texelFetch(depthtex1, offsetCoord, 0).x;

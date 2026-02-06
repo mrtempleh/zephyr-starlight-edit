@@ -14,20 +14,16 @@
         IrradianceSum cache  = IrradianceSum(vec3(0.0), vec3(0.0));
 
         #ifdef DIFFUSE_HALF_RES
-            if (weight > 0.001) screen = IrradianceSum(texelFetch(colortex12, sampleTexel >> 1, 0).rgb, texelFetch(colortex5, sampleTexel, 0).rgb);
+            if (weight > 0.01) screen = IrradianceSum(texelFetch(colortex12, sampleTexel >> 1, 0).rgb, texelFetch(colortex5, sampleTexel, 0).rgb);
         #else
-            if (weight > 0.001) screen = IrradianceSum(texelFetch(colortex12, sampleTexel, 0).rgb, texelFetch(colortex5, sampleTexel, 0).rgb);
+            if (weight > 0.01) screen = IrradianceSum(texelFetch(colortex12, sampleTexel, 0).rgb, texelFetch(colortex5, sampleTexel, 0).rgb);
         #endif
 
-        if (weight < 0.999) {
-            #ifdef SMOOTH_IRCACHE
-                cache = irradianceCacheSmooth(playerPos, normal, 0u, rand);
-            #else
-                cache = irradianceCache(playerPos, normal, 0u);
-            #endif
+        if (weight < 0.99) {
+            cache = irradianceCacheSmooth(playerPos, normal, 0u, rand);
             
             #ifdef REFLECTION_PER_PIXEL_SHADOWS
-                if (dot(normal, shadowDir) > -0.0001) cache.directIrradiance = TraceShadowRay(Ray(playerPos, sampleSunDir(shadowDir, rand)), 1024.0, true).rgb;
+                if (dot(normal, shadowDir) > -0.0001) cache.directIrradiance = TraceShadowRay(Ray(playerPos, sampleSunDir(shadowDir, rand)), SHADOW_MAX_RT_DISTANCE, true).rgb;
             #endif
         }
 

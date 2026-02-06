@@ -93,7 +93,7 @@ void main ()
     IrcacheVoxel voxel = ircache.entries[index];
     uint state = gl_GlobalInvocationID.x + (frameCounter & 2047u) * IRCACHE_VOXEL_ARRAY_SIZE / IRCACHE_UPDATE_INTERVAL;
 
-    if (voxel.packedPos == 0u || voxel.traceOrigin == 0u || frameCounter - voxel.lastFrame > 32u || voxel.lastFrame > frameCounter) {
+    if (voxel.packedPos == 0u || voxel.traceOrigin == 0u || frameCounter - voxel.lastFrame > 10u || voxel.lastFrame > frameCounter) {
         ircache.entries[index].traceOrigin = 0u;
         ircache.entries[index].rank = 128u;
         ircache.entries[index].lastFrame = 0u;
@@ -122,7 +122,7 @@ void main ()
 
         if (rt.hit) {
             IrradianceSum query = irradianceCache(0.999 * (ray.origin + ray.direction * rt.dist), rt.normal, voxel.rank);
-            radiance.rgb += cosTheta * (rt.albedo.rgb * (rt.emission + query.diffuseIrradiance) + lightTransmittance(sunDir) * lightBrightness * query.directIrradiance * evalCookBRDF(sunDir, ray.direction, max(0.2, rt.roughness), rt.normal, rt.albedo.rgb, rt.F0));
+            radiance.rgb += cosTheta * (rt.albedo.rgb * (rt.emission + query.diffuseIrradiance) + lightTransmittance(shadowDir) * lightBrightness * query.directIrradiance * evalCookBRDF(shadowDir, ray.direction, max(0.2, rt.roughness), rt.normal, rt.albedo.rgb, rt.F0));
         } 
         #ifndef DIMENSION_END
             else {

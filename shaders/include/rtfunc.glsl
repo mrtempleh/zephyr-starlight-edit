@@ -16,10 +16,9 @@ vec3 tint = vec3(1.0);
     if (all(greaterThan(delta, vec3(1024.0)))) return hitResult;
 #endif
 
-uint boxTestCount, triangleTestCount;
 uint octreeLevel = 6u;
 
-for (boxTestCount = 0u, triangleTestCount = 0u; triangleTestCount < 1024u && boxTestCount < 256u && all(greaterThan(voxel, ivec3(0))) && all(lessThan(voxel, voxelVolumeSize)); boxTestCount++) 
+for (uint i = 0u; i < 256u && all(greaterThan(voxel, ivec3(0))) && all(lessThan(voxel, voxelVolumeSize)); i++) 
 {   
     if (octreeLevel == 0u || isLeaf(voxel, octreeLevel)) {
         while (octreeLevel < 6u && isLeaf(voxel, octreeLevel + 1u)) octreeLevel++;
@@ -33,8 +32,6 @@ for (boxTestCount = 0u, triangleTestCount = 0u; triangleTestCount < 1024u && box
 
         while (nextTriangle != END_MARKER)
         {   
-            triangleTestCount++;
-
             BVHTriangle tr = unpackTriangle(allTriangles.list[nextTriangle]);
             nextTriangle = tr.next;
 
@@ -74,16 +71,14 @@ for (boxTestCount = 0u, triangleTestCount = 0u; triangleTestCount < 1024u && box
                 {   
                     if (alphaBlend && tr.isTranslucent && any(greaterThan(tint, vec3(0.05))))
                     {   
-                        #if defined RT_SHADOW && defined WATER_CAUSTICS
+                        #if defined RT_SHADOW && defined WATER_REFRACTED_CAUSTICS
                             if (tr.blockId == 10100) {
-                                vec3 waveNormal = getWaterWaveNormalTex(ray.origin + ray.direction * dist - voxelOffset + cameraPosition).xzy;
-
-                                tint *= waterTransmittance(min(16.0, dist)) * exp(WATER_CAUSTICS_STRENGTH * ray.direction.y * 32.0 * log(dist + 1.0) * (dot(ray.direction, normalize(waveNormal)) - ray.direction.y));
+                                tint *= waterTransmittance(min(16.0, dist)) * calcWaterCaustics(ray.origin + ray.direction * dist - voxelOffset, ray.direction, dist);
                             } else {
                                 tint *= mix(vec3(1.0), pow(albedo.rgb, vec3(2.2)), albedo.a);
                             }
                         #else
-                            tint *= mix(vec3(1.0), pow(albedo.rgb, vec3(2.2)), albedo.a);
+                            if (tr.blockId != 10100) tint *= mix(vec3(1.0), pow(albedo.rgb, vec3(2.2)), albedo.a);
                         #endif
                     } else {
                         #ifdef RT_SHADOW
@@ -93,7 +88,7 @@ for (boxTestCount = 0u, triangleTestCount = 0u; triangleTestCount < 1024u && box
                             hitResult.albedo = albedo;
                             hitResult.blockId = tr.blockId;
                             #ifdef SPECULAR_MAPPING
-                                hitResult.specularData = tr.textureIndex == 4095u ? textureLod(shadowtex1, texcoord, 0.0) : vec4(0.0);
+                                hitResult.specular = tr.textureIndex == 4095u ? textureLod(shadowtex1, texcoord, 0.0) : vec4(0.0);
                             #endif
                             hitResult.normal = normal;
                             hitResult.hit = true;
@@ -120,12 +115,12 @@ for (boxTestCount = 0u, triangleTestCount = 0u; triangleTestCount < 1024u && box
     hitResult.normal = -sign(dot(ray.direction, hitResult.normal)) * normalize(hitResult.normal);
 
     #ifdef IPBR
-        applyIntegratedSpecular(hitResult.albedo.rgb, hitResult.specularData, hitResult.blockId);
+        applyIntegratedSpecular(hitResult.albedo.rgb, hitResult.specular, hitResult.blockId);
     #endif
 
     hitResult.albedo = vec4(pow(tint * hitResult.albedo.rgb, vec3(2.2)), hitResult.albedo.a);
     
-    applySpecularMap(hitResult.specularData, hitResult.albedo.rgb, hitResult.F0, hitResult.roughness, hitResult.emission);
+    applySpecularMap(hitResult.specular, hitResult.albedo.rgb, hitResult.F0, hitResult.roughness, hitResult.emission);
 
     return hitResult;
 #endif
