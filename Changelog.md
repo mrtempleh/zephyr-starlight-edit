@@ -1,3 +1,9 @@
+# v0.2.1 hotfix1
+
+Changes over v0.2.1:
+* Fixed water reflected caustics being super bright at night
+* Fixed TAAU breaking some post processing effects
+
 # v0.2.1
 
 Changes over v0.2:

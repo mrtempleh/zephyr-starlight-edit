@@ -20,9 +20,9 @@ void main ()
 {   
     vec2 uv = gl_FragCoord.xy / screenSize;
     #ifdef TAA_VIRTUAL_DEPTH
-        float depth = texelFetch(colortex13, ivec2(gl_FragCoord.xy), 0).r;
+        float depth = texelFetch(colortex13, ivec2(gl_FragCoord.xy * TAA_UPSCALING_FACTOR * 0.01), 0).r;
     #else
-        float depth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).r;
+        float depth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy * TAA_UPSCALING_FACTOR * 0.01), 0).r;
     #endif
 
     if (depth < 0.7) {
@@ -45,7 +45,7 @@ void main ()
     for (int i = 0; i < DOF_SAMPLES; i++) {
         float theta = TWO_PI * (R1(i) + dither.x);
 
-        integratedData += texelFetch(colortex10, ivec2(renderSize * saturate(uv + radius * sqrt((i + dither.y) * rcp(DOF_SAMPLES)) * vec2(cos(theta), aspectRatio * sin(theta)))), 0).rgb;
+        integratedData += texelFetch(colortex10, ivec2(screenSize * saturate(uv + radius * sqrt((i + dither.y) * rcp(DOF_SAMPLES)) * vec2(cos(theta), aspectRatio * sin(theta)))), 0).rgb;
     }
 
     color = vec4(integratedData * rcp(DOF_SAMPLES), 1.0);

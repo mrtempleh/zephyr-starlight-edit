@@ -49,7 +49,7 @@ void main ()
             vec3 hitPos = ray.origin + ray.direction * rt.dist + rt.normal * 0.005;
 
             if (rt.blockId == 10100) {
-                diffuseIrradiance += schlickFresnel(vec3(WATER_REFLECTANCE), shadowDir.y) * TraceShadowRay(Ray(hitPos, shadowDir), SHADOW_MAX_RT_DISTANCE, true) * calcWaterCaustics(hitPos, ray.direction, rt.dist) * lightTransmittance(shadowDir) * evalCookBRDF(
+                diffuseIrradiance += lightBrightness * schlickFresnel(vec3(WATER_REFLECTANCE), shadowDir.y) * TraceShadowRay(Ray(hitPos, shadowDir), SHADOW_MAX_RT_DISTANCE, true) * calcWaterCaustics(hitPos, ray.direction, rt.dist) * lightTransmittance(shadowDir) * evalCookBRDF(
                     normalize(ray.direction + mat.geoNormal * 0.03125), 
                     normalize(currPos), 
                     mat.roughness, 
