@@ -8,9 +8,12 @@
 > Disclaimer: This shaderpack is an early work-in-progress so 
 > bugs, missing features and performance issues are to be expected.
 
-# About
+# Information
 
-Unlike (almost) all other path traced shaders for Minecraft, this one uses a completely different approach to voxelization, allowing it to voxelize block entities and (some) entities. This comes at a  performance cost compared to regular voxelization. The performance is very scene dependant, so it can be hard to predict how the pack performs. The shaderpack has been developed & tested on an RTX 4060 at 1440p, which gives an average of 50-60 FPS at the default settings. Currently the best way to know how the pack performs is to just try it and see.
+* Download: https://modrinth.com/shader/zephyr-starlight
+* Minecraft 1.21+ and Iris 1.9+ is recommended
+* For suggestions, ideas and discussions related to this shaderpack, head over to the `#zephyr-starlight-kirilpro` channel in the [shaderLABS](https://discord.gg/RpzWN9S) Discord server.
+* You can support me by becoming a patron: https://www.patreon.com/Kirilpro6284
 
 ## Features
 
