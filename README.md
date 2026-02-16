@@ -12,20 +12,20 @@
 
 * Download: https://modrinth.com/shader/zephyr-starlight
 * Minecraft 1.21+ and Iris 1.9+ is recommended
-* For suggestions, ideas and discussions related to this shaderpack, head over to the `#zephyr-starlight-kirilpro` channel in the [shaderLABS](https://discord.gg/RpzWN9S) Discord server.
+* For suggestions, ideas and discussions related to this shaderpack, head over to my [Discord server](https://discord.gg/NkReBjBmYQ) or the `#zephyr-starlight-kirilpro` channel in the [shaderLABS](https://discord.gg/RpzWN9S) Discord server.
 * You can support me by becoming a patron: https://www.patreon.com/Kirilpro6284
 
 ## Features
 
-* Triangle/quad list-based voxelization for complex geometry like entities, block entities and detailed blocks
+* Accurate ray-geometry intersection
 * Path traced diffuse, reflections and sun shadows
-* Temporal Anti-Aliasing
+* Temporal anti-aliasing and upscaling
 * Normal & specular mapping support
 * Basic sky rendering
 * Sparse irradiance cache for diffuse multi-bounce approximation
 * Reflection motion vector calculation (no TAA ghosting on reflections)
 * Spatiotemporal denoising
-* Optional TAAU (TAA Upscaling)
+* Camera effects: motion blur & depth of field
 * Post-processing: auto exposure & chromatic aberration
 
 ## Acknowledgements
