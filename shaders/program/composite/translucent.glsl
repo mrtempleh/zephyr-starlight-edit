@@ -179,7 +179,7 @@ void main ()
         }
     #else
         vec3 refractedRadiance = color.rgb;
-        float refractionDist = rayDist
+        float refractionDist = rayDist;
     #endif
 
     vec3 transmittance;

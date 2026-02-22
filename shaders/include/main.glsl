@@ -251,7 +251,7 @@
     {
         uvec4 pack;
 
-        bool hasSSS = specularData.b > (64.5 / 255.0);
+        bool hasSSS = (specularData.b > (64.5 / 255.0)) && (specularData.a < 0.5 / 255.0 || specularData.a > 254.5 / 255.0);
 
         pack.x = packUnorm4x8(vec4(albedo, 0.0)) | (blockId << 24u);
         pack.y = packUnorm4x8(vec4(0.0, hasSSS ? specularData.rgb : specularData.rga)) | ((blockId >> 8u) & 63u) | (uint(hasSSS) << 7u) | (uint(isHand) << 6u);

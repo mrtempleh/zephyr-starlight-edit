@@ -60,7 +60,7 @@ void main ()
         float viewOpticalDepth = 0.0;
 
         vec3 sunlightFactor = shadowLightBrightness * lightTransmittance(shadowDir) * mix(VL_INTENSITY, VL_INTENSITY_DAY, smoothstep(0.1, 0.3, sunDir.y)) * phaseMie(mu, 0.5);
-        vec3 skylight = 2.0 * smoothstep(120.0, 240.0, float(eyeBrightnessSmooth.y)) * texelFetch(texSkyView, ivec2(16, 60), 0).rgb;
+        vec3 skylight = 2.0 * smoothstep(60.0, 240.0, float(eyeBrightnessSmooth.y)) * texelFetch(texSkyView, ivec2(16, 60), 0).rgb;
 
         vec3 integratedData = vec3(0.0);
 

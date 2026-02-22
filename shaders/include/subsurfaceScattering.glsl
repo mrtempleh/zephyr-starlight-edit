@@ -15,7 +15,7 @@
                 float sampleDist = fract(0.4301597 * i + dither.y);
                 state *= sampleRotate;
 
-                sssDepth += clamp(textureShadow(shadowViewPos.xy + SSS_RADIUS * sampleDist * state) - shadowViewPos.z, 0.0, 8.0 * rcp(SSS_ABSORPTION));
+                sssDepth += clamp(textureShadow(shadowViewPos.xy + SSS_RADIUS * sampleDist * state) - shadowViewPos.z, 0.0, 16.0 * rcp(SSS_ABSORPTION));
             }
 
             return shadowLightBrightness * lightTransmittance(shadowDir)

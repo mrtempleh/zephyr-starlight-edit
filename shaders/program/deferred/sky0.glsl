@@ -36,19 +36,6 @@ void main ()
     ivec2 texel = ivec2(gl_GlobalInvocationID.xy);
 
     #ifdef DIMENSION_OVERWORLD
-        bool sky = false;
-
-        for (int x = 0; x < 4; x++) {
-            sky = sky || texelFetch(depthtex1, 4 * texel + 3 * ivec2(x & 1, x >> 1), 0).r == 1.0;
-
-            if (sky) break;
-        }
-
-        if (!sky) {
-            imageStore(colorimg11, texel, vec4(0.0));
-            return;
-        }
-
         vec2 uv = 4.0 * internalTexelSize * (texel + 0.5);
 
         imageStore(colorimg11, texel, vec4(EXPONENT_BIAS * evalScattering(vec3(0.0, planetRadius + eyeAltitude + ALTITUDE_BIAS, 0.0), normalize(screenToPlayerPos(vec3(uv, 1.0)).xyz - screenToPlayerPos(vec3(uv, 0.0)).xyz), sunDir, 0.499), 1.0));

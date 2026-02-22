@@ -1,3 +1,12 @@
+# v0.2.2 hotfix1
+
+Changes over v0.2.2:
+* Fixed SSS causing objects to glow in dark areas
+* Fixed labPBR emission not working sometimes
+* Fixed shader compile error when disabling Water Refraction
+* Fixed shadow artifacts with Half Res Trace and Blue Noise
+* Fixed sky artifacts around terrain edges (especially noticeable with TAAU)
+
 # v0.2.2
 
 Changes over v0.2.1:

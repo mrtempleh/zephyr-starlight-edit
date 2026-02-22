@@ -86,7 +86,11 @@ void main ()
         for (int i = 0; i < SHADOW_SAMPLES; i++) {
             shadowRay.direction = sampleSunDir(shadowDir, 
                 #if NOISE_METHOD == 1
-                    vec2(heitzSample(texel, frameCounter, 2 * i), heitzSample(texel, frameCounter, 2 * i + 1))
+                    #ifdef SHADOW_HALF_RES
+                        vec2(heitzSample(texel, SHADOW_SAMPLES * (frameCounter >> 2) + i, 0), heitzSample(texel, SHADOW_SAMPLES * (frameCounter >> 2) + i, 1))
+                    #else
+                        vec2(heitzSample(texel, SHADOW_SAMPLES * frameCounter + i, 0), heitzSample(texel, SHADOW_SAMPLES * frameCounter + i, 1))
+                    #endif
                 #else
                     vec2(randomValue(state), randomValue(state))
                 #endif
