@@ -34,8 +34,12 @@ layout (location = 0) out uvec4 colortex8Out;
 layout (location = 1) out uvec4 colortex9Out;
 
 void main ()
-{
-    if (any(greaterThan(gl_FragCoord.xy, screenSize))) discard;
+{   
+    #if TAA_UPSCALING_FACTOR < 100
+        if (any(greaterThan(gl_FragCoord.xy + 0.5, internalScreenSize))) {
+            return;
+        }
+    #endif
 
     vec2 texSize = vec2(textureSize(gtexture, 0));
     vec2 atlasTexCoord = texSize * vsout.texcoord;
@@ -55,7 +59,9 @@ void main ()
     #endif
 
     #if defined POM && defined STAGE_TERRAIN
-        vec3 rayDir = (screenToPlayerPos(vec3(gl_FragCoord.xy * texelSize, gl_FragCoord.z)).xyz - screenToPlayerPos(vec3(gl_FragCoord.xy * texelSize, 0.0)).xyz) * tbnMatrix;
+        vec2 uv = internalTexelSize * gl_FragCoord.xy;
+
+        vec3 rayDir = (screenToPlayerPos(vec3(uv, gl_FragCoord.z)).xyz - screenToPlayerPos(vec3(uv, 0.0)).xyz) * tbnMatrix;
 
         float mipScale    = exp2(-mipLevel);
         float invMipScale = exp2(mipLevel);
@@ -152,8 +158,11 @@ void main ()
         gl_Position.xy *= handScale / gl_ProjectionMatrix[1].y;
     #endif
 
-    gl_Position.xy = mix(-gl_Position.ww, gl_Position.xy, TAAU_RENDER_SCALE);
     gl_Position.xy += gl_Position.w * taaOffset;
+    
+    #if TAA_UPSCALING_FACTOR < 100
+        gl_Position.xy = mix(-gl_Position.ww, gl_Position.xy, TAAU_RENDER_SCALE);
+    #endif
 
     vsout.texcoord = mat4x2(gl_TextureMatrix[0]) * gl_MultiTexCoord0;
     vsout.vertexColor = gl_Color.rgb;

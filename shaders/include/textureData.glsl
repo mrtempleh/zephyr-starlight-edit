@@ -27,7 +27,7 @@
         size = uvec2(1) << logSize;
 
         for (uint attempt = 0u; attempt < 4u; attempt++) {
-            uint index = (hash + attempt * attempt) & 1023u;
+            uint index = (hash + (attempt * attempt + attempt) / 2) & 1023u;
             uint state = atomicCompSwap(allTextures.keys[index].hash, 0u, hash);     
 
             if (state == 0u) {

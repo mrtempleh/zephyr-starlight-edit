@@ -18,11 +18,11 @@ vec2 clipAABB (vec2 origin, vec2 dir, vec2 boxMin, vec2 boxMax)
 
 void main ()
 {   
-    vec2 uv = gl_FragCoord.xy / screenSize;
-    #ifdef TAA_VIRTUAL_DEPTH
-        float depth = texelFetch(colortex13, ivec2(gl_FragCoord.xy), 0).r;
+    vec2 uv = gl_FragCoord.xy * texelSize;
+    #ifdef TAA_REFLECTION_DEPTH
+        float depth = texelFetch(colortex13, ivec2(gl_FragCoord.xy * TAAU_RENDER_SCALE), 0).r;
     #else
-        float depth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).r;
+        float depth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy * TAAU_RENDER_SCALE), 0).r;
     #endif
 
     vec3 playerPos = screenToPlayerPos(vec3(uv, depth)).xyz;

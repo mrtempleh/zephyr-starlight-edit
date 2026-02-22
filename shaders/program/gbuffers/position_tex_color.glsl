@@ -18,7 +18,11 @@ layout (location = 1) out uvec4 materialData1;
 
 void main ()
 {
-    if (any(greaterThan(gl_FragCoord.xy, screenSize))) discard;
+    #if TAA_UPSCALING_FACTOR < 100
+        if (any(greaterThan(gl_FragCoord.xy + 0.5, internalScreenSize))) {
+            return;
+        }
+    #endif
     
     vec4 albedo = texture(gtexture, vsout.texcoord) * vec4(vsout.vertexColor, 1.0);
     uvec4 packedData = uvec4(packUnorm4x8(vec4(albedo.rgb, 0.0)), 0u, vsout.packedNormal, 0u);
@@ -48,8 +52,11 @@ void main ()
 {   
     gl_Position = ftransform();
 
-    gl_Position.xy = mix(-gl_Position.ww, gl_Position.xy, TAAU_RENDER_SCALE);
     gl_Position.xy += gl_Position.w * taaOffset;
+    
+    #if TAA_UPSCALING_FACTOR < 100
+        gl_Position.xy = mix(-gl_Position.ww, gl_Position.xy, TAAU_RENDER_SCALE);
+    #endif
 
     vsout.texcoord = mat4x2(gl_TextureMatrix[0]) * gl_MultiTexCoord0;
     vsout.vertexColor = gl_Color.rgb;

@@ -55,27 +55,28 @@
     uniform vec3 playerLookVector;
     uniform vec3 cameraVelocity;
     uniform vec3 cameraPosition;
+    uniform vec3 cameraMod256;
     uniform vec3 cameraMod16;
     uniform vec3 voxelOffset;
     uniform vec3 shadowDir;
     uniform vec3 moonDir;
     uniform vec3 sunDir;
 
-    uniform vec2 taaOffsetPrev;
-    uniform vec2 renderSize;
-    uniform vec2 taaOffset;
+    uniform vec2 internalScreenSize;
+    uniform vec2 internalTexelSize;
+    uniform vec2 screenSize;
     uniform vec2 texelSize;
-    uniform vec2 pixelSize;
 
+    uniform vec2 taaOffsetPrev;
+    uniform vec2 taaOffset;
+
+    uniform float shadowLightBrightness;
     uniform float centerDepthSmooth;
     uniform float frameTimeCounter;
-    uniform float lightBrightness;
     uniform float rainStrength;
     uniform float eyeAltitude;
     uniform float aspectRatio;
-    uniform float viewHeight;
     uniform float frameRate;
-    uniform float viewWidth;
 
     uniform ivec3 previousCameraPositionInt;
     uniform ivec3 cameraPositionInt;

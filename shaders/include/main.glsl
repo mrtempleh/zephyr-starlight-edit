@@ -9,6 +9,7 @@
         vec3 F0;
         float roughness;
         float emission;
+        float sssAmount;
         uint blockId;
         bool isHand;
     };
@@ -37,8 +38,10 @@
         vec3 F0;
         float roughness;
         float emission;
+        float sssAmount;
         float dist;
         uint blockId;
+        bool translucent;
         bool hit;
     };
 
@@ -147,11 +150,25 @@
 
     #ifdef STAGE_BEGIN
         layout (r11f_g11f_b10f) uniform image2D imgSkyView;
+        layout (rgba16f) uniform image2D imgMultiScatter;
         layout (rg16f) uniform image2D imgWaterNormal;
     #else
         uniform sampler2D texSkyView;
         uniform sampler2D texWaterNormal;
     #endif
+
+    uniform sampler2D texMultiScatter;
+
+    uint packPosition (ivec3 pos) 
+    {
+        pos &= ivec3(2047, 1023, 2047);
+        return (pos.x << 21) | (pos.y << 11) | (pos.z);
+    }
+    
+    uint hashPosition (ivec3 pos)
+    {
+        return (uint(pos.x) * 73856093) ^ (uint(pos.y) * 19349663) ^ (uint(pos.z) * 83492791);
+    }
 
     uint addVoxel (ivec3 voxel, uint data)
     {
@@ -162,7 +179,7 @@
 
         for (uint attempt = 0u; attempt < VOXEL_PROBE_ATTEMPTS; attempt++)
         {   
-            uint index = (hashedPos + attempt * attempt) % VOXEL_ARRAY_SIZE;
+            uint index = (hashedPos + (attempt * attempt + attempt) / 2) % VOXEL_ARRAY_SIZE;
             uint state = atomicCompSwap(voxelBuffer.voxels[index].packedPos, 0u, packedPos);
 
             if (state == 0u || state == packedPos) {
@@ -197,8 +214,11 @@
     {
         uvec3 data = uvec3(texelFetch(colortex8, texel, 0).rg, texelFetch(colortex9, texel, 0).r);
 
+        bool hasSSS = (data.y & 64u) == 64u;
+
         vec4 albedo = unpackUnorm4x8(data.x);
-        vec4 specularData = unpackUnorm4x8(data.y).gbra;
+        vec4 specularData = hasSSS ? unpackUnorm4x8(data.y).gbar : unpackUnorm4x8(data.y).gbra;
+
         #ifdef NORMAL_MAPPING
             vec4 normalData = unpackExp4x8(data.z);
         #else
@@ -215,7 +235,10 @@
         result.geoNormal = octDecode(normalData.xy);
         result.textureNormal = octDecode(normalData.zw);
 
-        applySpecularMap(specularData, result.albedo.rgb, result.F0, result.roughness, result.emission);
+        applySpecularMap(specularData, result.albedo.rgb, result.F0, result.roughness, result.emission, result.sssAmount);
+
+        if (hasSSS) result.emission = 0.0;
+        else result.sssAmount = 0.0;
 
         result.blockId = (data.x >> 24u) | ((data.y & 127u) << 8u);
         result.isHand = (data.y & 0x00000080u) == 0x00000080u;
@@ -227,13 +250,17 @@
     {
         uvec4 pack;
 
+        bool hasSSS = specularData.b > (64.5 / 255.0) && (specularData.a < (1.0 / 255.0) || specularData.a > 254.0 / 255.0);
+
         pack.x = packUnorm4x8(vec4(albedo, 0.0)) | ((blockId & 255u) << 24u);
-        pack.y = packUnorm4x8(vec4(0.0, specularData.rga)) | ((blockId >> 8u) & 127u) | (uint(isHand) << 7u);
+        pack.y = packUnorm4x8(vec4(0.0, hasSSS ? specularData.rgb : specularData.rga)) | ((blockId >> 8u) & 63u) | (uint(isHand) << 7u) | (uint(hasSSS) << 6u);
+
         #ifdef NORMAL_MAPPING
             pack.z = packExp4x8(vec4(octEncode(geoNormal), octEncode(textureNormal)));
         #else
             pack.z = packExp4x8(vec4(0.0, 0.0, octEncode(geoNormal).xy));
         #endif
+        
         pack.w = 0u;
 
         return pack;
@@ -307,6 +334,6 @@
         return unpack;
     }
 
-    #define miss(maxDist) RayHitInfo(vec4(1.0), vec4(0.0), vec3(0.0), vec3(0.0), 0.0, 0.0, maxDist, 0u, false)
+    #define miss(maxDist) RayHitInfo(vec4(1.0), vec4(0.0), vec3(0.0), vec3(0.0), 0.0, 0.0, 0.0, maxDist, 0u, false, false)
 
 #endif

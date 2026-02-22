@@ -1,3 +1,17 @@
+# v0.2.2
+
+Changes over v0.2.1:
+* Improved the look & quality of TAA upscaling
+* Fixed water & glass flickering with TAAU
+* Tweaked water caustics to be more visible at sunrise/sunset
+* Added refracted glass caustics in diffuse lighting
+* Small tweaks to shadow denoising
+* Fixed issues with water waves at high coordinates
+* Implemented atmosphere multiple scattering to make the sky bluer and less dingy
+* Fixed sky noise visible near the horizon
+* Diffuse and reflection denoiser improvements
+* Fixed a precision issue that caused light leaking in some situations
+
 # v0.2.1 hotfix1
 
 Changes over v0.2.1:

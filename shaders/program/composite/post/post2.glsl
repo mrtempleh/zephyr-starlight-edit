@@ -10,7 +10,7 @@ layout (location = 0) out vec4 color;
 
 void main ()
 {   
-    vec2 uv = gl_FragCoord.xy / screenSize;
+    vec2 uv = gl_FragCoord.xy * texelSize;
 
     color.r = texture(colortex10, mix(vec2(0.5), uv, 500.0 / (500.0 + 2 * CHROMATIC_ABERRATION))).r;
     color.g = texture(colortex10, mix(vec2(0.5), uv, 500.0 / (500.0 + CHROMATIC_ABERRATION))).g;

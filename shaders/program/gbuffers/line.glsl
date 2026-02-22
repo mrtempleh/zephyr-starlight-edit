@@ -18,7 +18,11 @@ layout (location = 1) out uvec4 colortex9Out;
 
 void main ()
 {
-    if (any(greaterThan(gl_FragCoord.xy, screenSize))) discard;
+    #if TAA_UPSCALING_FACTOR < 100
+        if (any(greaterThan(gl_FragCoord.xy + 0.5, internalScreenSize))) {
+            return;
+        }
+    #endif
 
     uvec4 data = packMaterialData(vsout.vertexColor.rgb, vec3(0.0, 1.0, 0.0), vec3(0.0, 1.0, 0.0), vec4(0.0, 0.0, 0.0, 0.1), 65000u, false);
 
@@ -55,7 +59,7 @@ vec4 ftransformLine()
  	vec3 ndc1 = linePosStart.xyz / linePosStart.w;
   	vec3 ndc2 = linePosEnd.xyz / linePosEnd.w;
 
-  	vec2 lineScreenDirection = texelSize.y * normalize((ndc2.xy - ndc1.xy) * renderSize);
+  	vec2 lineScreenDirection = internalTexelSize.y * normalize((ndc2.xy - ndc1.xy) * internalScreenSize);
   	vec2 lineOffset = lineWidth * vec2(-lineScreenDirection.y, lineScreenDirection.x);
 	
   	if (lineOffset.x < 0.0) {
@@ -73,8 +77,11 @@ void main ()
 {   
     gl_Position = ftransformLine();
 
-    gl_Position.xy = mix(-gl_Position.ww, gl_Position.xy, TAAU_RENDER_SCALE);
     gl_Position.xy += gl_Position.w * taaOffset;
+
+    #if TAA_UPSCALING_FACTOR < 100
+        gl_Position.xy = mix(-gl_Position.ww, gl_Position.xy, TAAU_RENDER_SCALE);
+    #endif
     
     vsout.vertexColor = vaColor;
 }

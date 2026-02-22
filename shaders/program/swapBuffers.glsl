@@ -19,12 +19,38 @@
 layout (rgba16f) uniform image2D SWAP_TO;
 layout (local_size_x = 8, local_size_y = 8) in;
 
-#if defined FULL_RES || TAA_UPSCALING_FACTOR == 100
-    const vec2 workGroupsRender = vec2(1.0, 1.0);
-#elif TAA_UPSCALING_FACTOR == 75
-    const vec2 workGroupsRender = vec2(0.75, 0.75);
-#elif TAA_UPSCALING_FACTOR == 50
-    const vec2 workGroupsRender = vec2(0.5, 0.5);
+#ifdef HALF_RES
+    #if TAA_UPSCALING_FACTOR == 100
+        const vec2 workGroupsRender = vec2(0.5, 0.5);
+    #elif TAA_UPSCALING_FACTOR == 83
+        const vec2 workGroupsRender = vec2(0.415, 0.415);
+    #elif TAA_UPSCALING_FACTOR == 75
+        const vec2 workGroupsRender = vec2(0.375, 0.375);
+    #elif TAA_UPSCALING_FACTOR == 66
+        const vec2 workGroupsRender = vec2(0.33, 0.33);
+    #elif TAA_UPSCALING_FACTOR == 50
+        const vec2 workGroupsRender = vec2(0.25, 0.25);
+    #elif TAA_UPSCALING_FACTOR == 33
+        const vec2 workGroupsRender = vec2(0.165, 0.165);
+    #elif TAA_UPSCALING_FACTOR == 25
+        const vec2 workGroupsRender = vec2(0.125, 0.125);
+    #endif
+#else
+    #if defined FULL_RES || TAA_UPSCALING_FACTOR == 100
+        const vec2 workGroupsRender = vec2(1.0, 1.0);
+    #elif TAA_UPSCALING_FACTOR == 83
+        const vec2 workGroupsRender = vec2(0.83, 0.83);
+    #elif TAA_UPSCALING_FACTOR == 75
+        const vec2 workGroupsRender = vec2(0.75, 0.75);
+    #elif TAA_UPSCALING_FACTOR == 66
+        const vec2 workGroupsRender = vec2(0.66, 0.66);
+    #elif TAA_UPSCALING_FACTOR == 50
+        const vec2 workGroupsRender = vec2(0.5, 0.5);
+    #elif TAA_UPSCALING_FACTOR == 33
+        const vec2 workGroupsRender = vec2(0.33, 0.33);
+    #elif TAA_UPSCALING_FACTOR == 25
+        const vec2 workGroupsRender = vec2(0.25, 0.25);
+    #endif
 #endif
 
 void main ()

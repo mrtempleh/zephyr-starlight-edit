@@ -2,4 +2,4 @@
 
 #define STAGE_BEGIN
 
-#include "/program/compute/sky/skyView.glsl"
+#include "/program/compute/lut/multiScatter.glsl"

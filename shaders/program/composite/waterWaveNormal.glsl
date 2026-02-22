@@ -14,16 +14,24 @@ layout (local_size_x = 8, local_size_y = 8) in;
 
 #if TAA_UPSCALING_FACTOR == 100
     const vec2 workGroupsRender = vec2(1.0, 1.0);
+#elif TAA_UPSCALING_FACTOR == 83
+    const vec2 workGroupsRender = vec2(0.83, 0.83);
 #elif TAA_UPSCALING_FACTOR == 75
     const vec2 workGroupsRender = vec2(0.75, 0.75);
+#elif TAA_UPSCALING_FACTOR == 66
+    const vec2 workGroupsRender = vec2(0.66, 0.66);
 #elif TAA_UPSCALING_FACTOR == 50
     const vec2 workGroupsRender = vec2(0.5, 0.5);
+#elif TAA_UPSCALING_FACTOR == 33
+    const vec2 workGroupsRender = vec2(0.33, 0.33);
+#elif TAA_UPSCALING_FACTOR == 25
+    const vec2 workGroupsRender = vec2(0.25, 0.25);
 #endif
 
 void main ()
 {
     ivec2 texel = ivec2(gl_GlobalInvocationID.xy);
-    vec2 uv = texelSize * (vec2(texel) + 0.5);
+    vec2 uv = internalTexelSize * (vec2(texel) + 0.5);
 
     float depth        = texelFetch(depthtex0, texel, 0).r;
     float depth1       = texelFetch(depthtex1, texel, 0).r;
@@ -36,7 +44,7 @@ void main ()
 
     vec3 playerPos = screenToPlayerPos(vec3(uv, depth)).xyz;
 
-    vec3 worldPos = cameraPosition + playerPos;
+    vec3 worldPos = mod(cameraMod256 + playerPos, 256.0);
     vec3 normal = tbnNormal(mat.normal) * calcWaterNormal(worldPos);
 
     if (dot(screenToPlayerPos(vec3(uv, depth1)).xyz - playerPos, normal) < 0.0) imageStore(colorimg1, ivec2(gl_GlobalInvocationID.xy), uvec4(packUnorm4x8(mat.albedo), mat.blockId | (pack2x8(octEncode(normal)) << 16u), 0u, 1u));

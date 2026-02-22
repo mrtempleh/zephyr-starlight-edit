@@ -12,6 +12,6 @@ layout (location = 0) out vec4 color;
 
 void main ()
 {   
-    int tileIndex = int(floatBitsToUint(gl_FragCoord.x / viewWidth) >> 23) - 127;
+    int tileIndex = int(floatBitsToUint(texelSize.x * gl_FragCoord.x) >> 23) - 127;
 	color = texelFetch(colortex10, ivec2(gl_FragCoord.xy - uintBitsToFloat((tileIndex + 127) << 23) * screenSize), -tileIndex);
 }

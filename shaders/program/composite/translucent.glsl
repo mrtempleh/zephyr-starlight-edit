@@ -14,7 +14,7 @@
 #include "/include/spaceConversion.glsl"
 #include "/include/textureSampling.glsl"
 #include "/include/atmosphere.glsl"
-#include "/include/heitz.glsl"
+#include "/include/sampling.glsl"
 #include "/include/lighting.glsl"
 #include "/include/text.glsl"
 
@@ -25,10 +25,18 @@ layout (local_size_x = 8, local_size_y = 8) in;
 
 #if TAA_UPSCALING_FACTOR == 100
     const vec2 workGroupsRender = vec2(1.0, 1.0);
+#elif TAA_UPSCALING_FACTOR == 83
+    const vec2 workGroupsRender = vec2(0.83, 0.83);
 #elif TAA_UPSCALING_FACTOR == 75
     const vec2 workGroupsRender = vec2(0.75, 0.75);
+#elif TAA_UPSCALING_FACTOR == 66
+    const vec2 workGroupsRender = vec2(0.66, 0.66);
 #elif TAA_UPSCALING_FACTOR == 50
     const vec2 workGroupsRender = vec2(0.5, 0.5);
+#elif TAA_UPSCALING_FACTOR == 33
+    const vec2 workGroupsRender = vec2(0.33, 0.33);
+#elif TAA_UPSCALING_FACTOR == 25
+    const vec2 workGroupsRender = vec2(0.25, 0.25);
 #endif
 
 // TODO : rewrite this mess
@@ -36,56 +44,67 @@ layout (local_size_x = 8, local_size_y = 8) in;
 void main ()
 {
     ivec2 texel = ivec2(gl_GlobalInvocationID.xy);
-    vec2 uv = texelSize * (vec2(texel) + 0.5);
+    vec2 uv = internalTexelSize * (vec2(texel) + 0.5);
 
-    float depth        = texelFetch(depthtex0, texel, 0).r;
+    float depth0       = texelFetch(depthtex0, texel, 0).r;
     float depth1       = texelFetch(depthtex1, texel, 0).r;
     vec4 color         = texelFetch(colortex7, texel, 0) / EXPONENT_BIAS;
     float virtualDepth = texelFetch(colortex13, texel, 0).r;
     
-    if (depth1 == depth) {
+    if (depth1 == depth0) {
         if (isEyeInWater == 1) {
-            color.rgb *= waterTransmittance(distance(screenToPlayerPos(vec3(uv, depth)).xyz, vec3(screenToPlayerPos(vec3(uv, 0.0)))));
-            imageStore(colorimg7, ivec2(gl_GlobalInvocationID.xy), EXPONENT_BIAS * color);
+            color.rgb *= waterTransmittance(distance(screenToPlayerPos(vec3(uv, depth0)).xyz, vec3(screenToPlayerPos(vec3(uv, 0.0)))));
+            imageStore(colorimg7, texel, EXPONENT_BIAS * color);
         }
+
+        imageStore(colorimg13, texel, vec4(virtualDepth, 0.0, 0.0, 1.0));
         
         return;
     }
     
     TranslucentMaterial mat = unpackTranslucentMaterial(texel);
 
-    vec3 rayColor = vec3(0.0);
+    vec3 playerPos = screenToPlayerPos(vec3(uv, depth1)).xyz;
+    vec3 rayPos    = screenToPlayerPos(vec3(uv, depth0)).xyz;
 
-    vec3 rayPos = screenToPlayerPos(vec3(uv, depth)).xyz;
+    float rayDist = distance(rayPos, playerPos);
 
     if (mat.isHand) {
         rayPos += 0.5 * playerLookVector;
     }
 
     vec3 rayDir = normalize(rayPos - screenToPlayerPos(vec3(uv, 0.000001)).xyz);
+    vec3 refractDir = refract(rayDir, mat.normal, mat.blockId == 10100 ? (isEyeInWater == 1 ? WATER_IOR : rcp(WATER_IOR)) : rcp(GLASS_IOR));
+
+    bool tir = refractDir == vec3(0.0);
+    bool water = isEyeInWater == 1 && mat.blockId == 10100;
+
     Ray ray = Ray(rayPos + mat.normal * 0.01, reflect(rayDir, mat.normal));
+
+    vec3 reflectedRadiance = vec3(0.0);
 
     RayHitInfo rt = TraceGenericRay(ray, REFLECTION_MAX_RT_DISTANCE, true, true);
 
     if (rt.hit) {
         IrradianceSum r = sampleReflectionLighting(ray.origin + rt.dist * ray.direction, rt.normal, blueNoise(vec2(texel)).rg, 0.3);
 
-        rayColor += rt.albedo.rgb * rt.emission + rt.albedo.rgb * r.diffuseIrradiance + lightTransmittance(shadowDir) * lightBrightness * r.directIrradiance * evalCookBRDF(normalize(shadowDir + rt.normal * 0.03125), ray.direction, max(0.1, rt.roughness), rt.normal, rt.albedo.rgb, rt.F0);
+        reflectedRadiance += rt.albedo.rgb * rt.emission + rt.albedo.rgb * r.diffuseIrradiance + lightTransmittance(shadowDir) * shadowLightBrightness * r.directIrradiance * evalCookBRDF(normalize(shadowDir + rt.normal * 0.03125), ray.direction, max(0.1, rt.roughness), rt.normal, rt.albedo.rgb, rt.F0);
     } else {
-        rayColor += rt.albedo.rgb * sampleSkyView(ray.direction);
+        reflectedRadiance += rt.albedo.rgb * sampleSkyView(ray.direction);
     }
 
-    if (isEyeInWater == 1) rayColor.rgb *= waterTransmittance(rt.dist);
+    if (isEyeInWater == 1) reflectedRadiance.rgb *= waterTransmittance(rt.dist);
     
     #ifdef WATER_REFRACTION
         float waterOpticalDepth = 0.0;
     #else
-        float waterOpticalDepth = distance(rayPos.xyz, screenToPlayerPos(vec3(uv, depth1)).xyz);
+        float waterOpticalDepth = rayDist;
     #endif
 
     #if defined GLASS_REFRACTION || defined WATER_REFRACTION
         vec3 throughput = vec3(0.25);
-        vec3 refractColor = vec3(0.0);
+        vec3 refractedRadiance = vec3(0.0);
+        float refractionDist = 0.0;
 
         if (
             #if defined GLASS_REFRACTION && defined WATER_REFRACTION
@@ -96,9 +115,9 @@ void main ()
                 mat.blockId == 10100
             #endif
         ) { 
-            Ray refractRay = Ray(rayPos - mat.normal * 0.01, refract(rayDir, mat.normal, mat.blockId == 10100 ? (isEyeInWater == 1 ? WATER_IOR : rcp(WATER_IOR)) : rcp(GLASS_IOR)));
+            Ray refractRay = Ray(rayPos - mat.normal * 0.01, refractDir);
 
-            if (refractRay.direction != vec3(0.0)) 
+            if (!tir)
             {
                 bool medium = true;
 
@@ -108,6 +127,8 @@ void main ()
                     #ifdef WATER_REFRACTION
                         if (mat.blockId == 10100 && i == 0) waterOpticalDepth += refraction.dist;
                     #endif
+
+                    refractionDist += refraction.dist;
 
                     if (refraction.hit) {
                         vec3 hitPos = refractRay.origin + refractRay.direction * refraction.dist;
@@ -135,19 +156,21 @@ void main ()
                         } else {
                             IrradianceSum r = sampleReflectionLighting(hitPos, refraction.normal, blueNoise(vec2(texel)).rg, 0.4995);
 
-                            refractColor += throughput * (refraction.albedo.rgb * refraction.emission + refraction.albedo.rgb * r.diffuseIrradiance + lightTransmittance(shadowDir) * lightBrightness * r.directIrradiance * evalCookBRDF(normalize(shadowDir + refraction.normal * 0.03125), refractRay.direction, refraction.roughness, refraction.normal, refraction.albedo.rgb, refraction.F0));
+                            refractedRadiance += throughput * (refraction.albedo.rgb * refraction.emission + refraction.albedo.rgb * r.diffuseIrradiance + lightTransmittance(shadowDir) * shadowLightBrightness * r.directIrradiance * evalCookBRDF(normalize(shadowDir + refraction.normal * 0.03125), refractRay.direction, refraction.roughness, refraction.normal, refraction.albedo.rgb, refraction.F0));
                         }
                     } else {
-                        refractColor += throughput * sampleSkyView(refractRay.direction);
+                        refractedRadiance += throughput * sampleSkyView(refractRay.direction);
                         break;
                     }
                 }
             }
         } else {
-            refractColor = color.rgb;
+            refractedRadiance = color.rgb;
+            refractionDist = rayDist;
         }
     #else
-        vec3 refractColor = color.rgb;
+        vec3 refractedRadiance = color.rgb;
+        float refractionDist = rayDist
     #endif
 
     vec3 transmittance;
@@ -155,17 +178,25 @@ void main ()
     if (mat.blockId == 10100) transmittance = waterTransmittance(min(8.0, waterOpticalDepth));
     else transmittance = mix(vec3(1.0), mat.albedo.rgb, GLASS_OPACITY);
 
-    if (isEyeInWater == 1) {
-        vec3 viewTransmittance = waterTransmittance(distance(screenToPlayerPos(vec3(uv, depth)).xyz, vec3(screenToPlayerPos(vec3(uv, 0.0)))));
+    refractedRadiance *= transmittance;
 
-        rayColor.rgb *= viewTransmittance;
-        refractColor.rgb *= viewTransmittance;
+    if (isEyeInWater == 1) {
+        vec3 viewTransmittance = waterTransmittance(distance(rayPos, screenToPlayerPos(vec3(uv, 0.0)).xyz));
+
+        reflectedRadiance *= viewTransmittance;
+        refractedRadiance *= viewTransmittance;
     }
 
-    imageStore(colorimg13, texel, vec4(playerToScreenPos(rayPos.xyz + rayDir * rt.dist).z, 0.0, 0.0, 1.0));
-    imageStore(colorimg7, texel, vec4(EXPONENT_BIAS * mix(
-        refractColor.rgb * transmittance, 
-        rayColor, 
-        ((isEyeInWater == 1 && mat.blockId == 10100) ? vec3(refract(rayDir, mat.normal, WATER_IOR) == vec3(0.0) ? 1.0 : 0.0) : schlickFresnel(vec3(mat.blockId == 10100 ? WATER_REFLECTANCE : GLASS_REFLECTANCE), -dot(rayDir, mat.normal)))
+    vec3 fresnel = schlickFresnel(vec3(mat.blockId == 10100 ? WATER_REFLECTANCE : GLASS_REFLECTANCE), -dot(rayDir, mat.normal));
+    
+    vec3 reflectedFresnelRadiance = reflectedRadiance * fresnel;
+    vec3 refractedFresnelRadiance = refractedRadiance * (1.0 - fresnel);
+
+    float w1 = luminance(reflectedFresnelRadiance);
+    float w2 = luminance(refractedFresnelRadiance);
+
+    imageStore(colorimg13, texel, vec4(playerToScreenPos(rayPos.xyz + rayDir * ((rt.dist * w1 + refractionDist * w2) / (w1 + w2))).z, 0.0, 0.0, 1.0));
+    imageStore(colorimg7, texel, vec4(EXPONENT_BIAS * (
+        water ? (tir ? reflectedRadiance : refractedRadiance) : (reflectedFresnelRadiance + refractedFresnelRadiance)
     ), 1.0));
 }

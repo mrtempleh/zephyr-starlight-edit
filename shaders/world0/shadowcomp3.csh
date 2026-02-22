@@ -2,4 +2,4 @@
 
 #define OCTREE_PASS 6
 
-#include "/program/compute/octree/octreeConstruction.glsl"
+#include "/program/compute/octreeConstruction.glsl"

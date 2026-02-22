@@ -11,6 +11,7 @@
 #include "/include/ircache.glsl"
 #include "/include/brdf.glsl"
 #include "/include/atmosphere.glsl"
+#include "/include/sampling.glsl"
 
 layout (local_size_x = 64) in;
 
@@ -108,7 +109,7 @@ void main ()
     vec3 normal = octDecode(saturate(vec2(uvec2(voxel.traceOrigin >> 4u, voxel.traceOrigin) & 15u) * rcp(14.0)));
     vec3 playerPos = ((voxelPos.xyz << voxelPos.w) - (cameraPositionInt << 2)) / 4.0 - cameraPositionFract + exp2(voxelPos.w - 2.0) * ((uvec3(voxel.traceOrigin >> 24u, voxel.traceOrigin >> 16u, voxel.traceOrigin >> 8u) & 255u) * rcp(256.0) + rcp(512.0) - normal * 0.47);
 
-    Ray ray; 
+    Ray ray;
     
     ray.origin = playerPos;
 
@@ -121,12 +122,12 @@ void main ()
         float cosTheta = dot(normal, ray.direction);
 
         if (rt.hit) {
-            IrradianceSum query = irradianceCache(0.999 * (ray.origin + ray.direction * rt.dist), rt.normal, voxel.rank);
-            radiance.rgb += cosTheta * (rt.albedo.rgb * (rt.emission + query.diffuseIrradiance) + lightTransmittance(shadowDir) * lightBrightness * query.directIrradiance * evalCookBRDF(shadowDir, ray.direction, max(0.2, rt.roughness), rt.normal, rt.albedo.rgb, rt.F0));
+            IrradianceSum query = irradianceCache(ray.origin + ray.direction * (rt.dist - 0.002), rt.normal, voxel.rank);
+            radiance.rgb += cosTheta * (rt.albedo.rgb * (rt.emission + query.diffuseIrradiance) + lightTransmittance(shadowDir) * shadowLightBrightness * query.directIrradiance * evalCookBRDF(shadowDir, ray.direction, max(0.2, rt.roughness), rt.normal, rt.albedo.rgb, rt.F0));
         } 
         #ifndef DIMENSION_END
             else {
-                radiance.rgb += cosTheta * calcSkyColor(ray.direction, sunDir, randomValue(state));
+                radiance.rgb += cosTheta * rt.albedo.rgb * sampleSkyView(ray.direction);
             }
         #endif
     }
@@ -141,6 +142,21 @@ void main ()
     else direct = voxel.radiance == IRCACHE_INV_MARKER ? vec3(0.0) : unpack3x10(voxel.direct);
 
     vec4 r = unpackHalf4x16(voxel.radiance);
+
+    if (r == vec4(-1.0)) {
+        for (int i = voxelPos.w - 1; i <= voxelPos.w + 2; i += 2) {
+            if (i >= 0) {
+                IrradianceSum prevData = irradianceCacheSilent(playerPos, normal, i);
+
+                if (prevData.diffuseIrradiance != vec3(0.0)) {
+                    r.rgb = max(vec3(0.0), prevData.diffuseIrradiance);
+                    direct = max(vec3(0.0), prevData.directIrradiance);
+
+                    break;
+                }
+            }
+        }
+    }
 
     ircache.entries[index].direct = pack3x10(mix(unpack3x10(voxel.direct), direct, (r == vec4(-1.0)) ? 1.0 : rcp(max(16.0, 0.25 * frameRate))));
     ircache.entries[index].radiance = packHalf4x16(any(isnan(r)) ? vec4(0.0) : (r == vec4(-1.0)) ? radiance : mix(r, radiance, rcp(max(128.0, 2.0 * frameRate))));

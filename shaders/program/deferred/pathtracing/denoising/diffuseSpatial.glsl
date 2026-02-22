@@ -17,36 +17,38 @@
     const vec2 kernel[8] = vec2[8](
         vec2(-2.0, 2.0),
         vec2(2.0, 2.0),
-        vec2(0.0, 32.0),
-        vec2(32.0, 0.0),
-        vec2(-8.0, 8.0),
-        vec2(8.0, 8.0),
-        vec2(-16.0, 16.0),
-        vec2(16.0, 16.0)
+        vec2(0.0, 40.0),
+        vec2(40.0, 0.0),
+        vec2(8.0, 0.0),
+        vec2(0.0, 8.0),
+        vec2(16.0, 16.0),
+        vec2(-16.0, 16.0)
     );
 
     void main ()
     {   
+        ivec2 srcTexel = ivec2(gl_FragCoord.xy);
+
         #ifdef DIFFUSE_HALF_RES
-            ivec2 texel = 2 * ivec2(gl_FragCoord.xy) + checker2x2(frameCounter);
+            ivec2 dstTexel = 2 * ivec2(gl_FragCoord.xy) + checker2x2(frameCounter);
         #else
-            ivec2 texel = ivec2(gl_FragCoord.xy);
+            ivec2 dstTexel = srcTexel;
         #endif
         
-        float depth = texelFetch(depthtex1, texel, 0).x;
+        float depth = texelFetch(depthtex1, dstTexel, 0).x;
 
         if (depth == 1.0) 
         {
-            filteredData = texelFetch(colortex2, ivec2(gl_FragCoord.xy), 0);
+            filteredData = texelFetch(colortex2, srcTexel, 0);
             return;
         }
         
-        uint normalData = texelFetch(colortex9, texel, 0).r;
+        uint normalData = texelFetch(colortex9, dstTexel, 0).r;
 
-        vec4 currData = texelFetch(colortex2, ivec2(gl_FragCoord.xy), 0);
+        vec4 currData = texelFetch(colortex2, srcTexel, 0);
         float currLogLum = log2(currData.r + currData.g + currData.b);
         vec3 currNormal = octDecode(unpackExp4x8(normalData).zw);
-        vec4 currPos = screenToPlayerPos(vec3((texel + 0.5) * texelSize, depth));
+        vec4 currPos = screenToPlayerPos(vec3((dstTexel + 0.5) * internalTexelSize, depth));
 
         #ifdef NORMAL_MAPPING
             vec3 geoNormal = octDecode(unpackExp4x8(normalData).xy);
@@ -58,17 +60,26 @@
             float dither = blueNoise(gl_FragCoord.xy).x;
         #endif
 
-		vec2 sampleDir = kernel[FILTER_PASS ^ (frameCounter & 1)];
-        float temporalWeight = (isnan(currData.w) ? 0.0 : clamp(currData.w, 0.0, 64.0)) * sqrt(DIFFUSE_SAMPLES) * 0.5;
+        vec2 sampleDir = kernel[FILTER_PASS ^ (frameCounter & 1)];
+        float kernelSize = 0.002 * length(sampleDir);
+
+        float varianceWeight = exp(-currData.w) * (sqrt(DIFFUSE_SAMPLES) * 64.0);
+
         vec4 samples = vec4(0.0);
         float weights = 0.0;
+        float maxTapWeight = 0.0;
 
         #if FILTER_PASS < 4 
             vec2 samplePos = gl_FragCoord.xy - sampleDir;
             for (int i = 0; i < 5; i++, samplePos += 0.5 * sampleDir) 
         #else
-            vec2 samplePos = gl_FragCoord.xy + (dither * 0.66 - 1.0) * sampleDir;
-            for (int i = 0; i < 3; i++, samplePos += 0.66 * sampleDir) 
+            #if DIFFUSE_FILTER_QUALITY == 1
+                vec2 samplePos = gl_FragCoord.xy + (dither * 0.4 - 1.0) * sampleDir;
+                for (int i = 0; i < 5; i++, samplePos += 0.4 * sampleDir) 
+            #else
+                vec2 samplePos = gl_FragCoord.xy + (dither * 0.66 - 1.0) * sampleDir;
+                for (int i = 0; i < 3; i++, samplePos += 0.66 * sampleDir) 
+            #endif
         #endif
         {   
             ivec2 sampleTexel = ivec2(samplePos);
@@ -78,30 +89,35 @@
                 ivec2 sampleCoord = sampleTexel;
             #endif
 
-            if (clamp(sampleCoord, ivec2(0), ivec2(renderSize) - 1) == sampleCoord) {
+            if (clamp(sampleCoord, ivec2(0), ivec2(internalScreenSize) - 1) == sampleCoord) {
                 #ifdef DIFFUSE_HALF_RES
-                    vec4 sampleData = texelFetch(colortex2, clamp(sampleTexel, ivec2(0), ivec2(floor(renderSize * 0.5)) - 1), 0);
+                    vec4 sampleData = texelFetch(colortex2, clamp(sampleTexel, ivec2(0), ivec2(floor(internalScreenSize * 0.5)) - 1), 0);
                 #else
                     vec4 sampleData = texelFetch(colortex2, sampleCoord, 0);
                 #endif
 
                 if (!any(isnan(sampleData))) {
                     vec3 sampleNormal = octDecode(unpack2x8(texelFetch(colortex9, sampleCoord, 0).x & 65535u));
-                    vec3 posDiff = currPos.xyz - screenToPlayerPos(vec3((sampleCoord + 0.5) * texelSize, texelFetch(depthtex1, sampleCoord, 0).x)).xyz;
+                    vec3 posDiff = currPos.xyz - screenToPlayerPos(vec3((sampleCoord + 0.5) * internalTexelSize, texelFetch(depthtex1, sampleCoord, 0).x)).xyz;
 
-                    float sampleWeight = exp(-temporalWeight * (
+                    float sampleVariance = exp(-sampleData.w) * (sqrt(DIFFUSE_SAMPLES) * 32.0);
+
+                    float sampleWeight = exp(-max(sampleVariance, varianceWeight) * (
                           DENOISER_NORMAL_WEIGHT * (-dot(sampleNormal, currNormal) * 0.5 + 0.5)
                         + DENOISER_DEPTH_WEIGHT * abs(dot(geoNormal, posDiff))
-                        + 0.005 * DENOISER_SHARPENING * length(sampleDir) * min(abs(log2(sampleData.r + sampleData.g + sampleData.b) - currLogLum), 3.0)
+                        + DENOISER_SHARPENING * kernelSize * min(abs(log2(sampleData.r + sampleData.g + sampleData.b) - currLogLum), 3.0)
                         )
                     );
 
                     weights += sampleWeight;
-                    samples += sampleWeight * sampleData;
+                    maxTapWeight = max(maxTapWeight, sampleWeight);
+
+                    samples.rgb += sampleWeight * sampleData.rgb;
+                    samples.a = max(samples.a, sampleWeight * sampleData.a);
                 }
             }
         }
 
-        if (weights > (0.00016 * temporalWeight)) filteredData = samples / weights;
+        if (weights > 0.001) filteredData = vec4(samples.rgb / weights, samples.a / maxTapWeight);
         else filteredData = currData;
     }

@@ -11,8 +11,10 @@
 
     void main ()
     {
-        vec4 data = texelFetch(gtexture, ivec2(gl_FragCoord.xy), 0);
-        allTextures.data[offset + uint(gl_FragCoord.x) + uint(gl_FragCoord.y) * (1u << uint(ceil(log2(float(textureSize(gtexture, 0).x) - 0.5))))] = packUnorm4x8(vec4(data.rgb, step(0.1, data.a)));
+        ivec2 texel = ivec2(gl_FragCoord.xy);
+
+        vec4 data = texelFetch(gtexture, texel, 0);
+        allTextures.data[offset + texel.x + texel.y * (1u << uint(ceil(log2(float(textureSize(gtexture, 0).x) - 0.5))))] = packUnorm4x8(vec4(data.rgb, step(0.1, data.a)));
         discard;
     }
 

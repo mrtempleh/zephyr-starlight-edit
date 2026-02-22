@@ -14,46 +14,46 @@
     /* RENDERTARGETS: 2 */
     layout (location = 0) out vec4 filteredData;
 
-    const vec2 kernel[6] = vec2[6](
-        vec2(2.0, -2.0),
-        vec2(2.0, 2.0),
-        vec2(16.0, 0.0),
-        vec2(0.0, 16.0),
-        vec2(9.0, 9.0),
-        vec2(-9.0, 9.0)
+    const vec2 kernel[4] = vec2[4](
+        vec2(4.0, -4.0),
+        vec2(4.0, 4.0),
+        vec2(16.0, 16.0),
+        vec2(16.0, -16.0)
     );
     
     void main ()
     {   
-        #ifdef REFLECTION_HALF_RES
-            ivec2 texel = 2 * ivec2(gl_FragCoord.xy) + checker2x2(frameCounter);
-        #else
-            ivec2 texel = ivec2(gl_FragCoord.xy);
-        #endif
+        ivec2 texel = ivec2(gl_FragCoord.xy);
 
         float depth = texelFetch(depthtex1, texel, 0).x;
-        filteredData = texelFetch(colortex2, ivec2(gl_FragCoord.xy), 0);
+        filteredData = texelFetch(colortex2, texel, 0);
 
         if (depth == 1.0) return;
         
         DeferredMaterial mat = unpackMaterialData(texel);
-        vec4 currData = texelFetch(colortex2, ivec2(gl_FragCoord.xy), 0);
-        float currLogLum = log2(currData.r + currData.g + currData.b);
 
         if (mat.roughness > REFLECTION_ROUGHNESS_THRESHOLD || mat.roughness < 0.003) return;
-        
-        #if FILTER_PASS > 3
+
+        vec4 currData = texelFetch(colortex2, texel, 0);
+        float currLogLum = log2(currData.r + currData.g + currData.b);
+
+        #if FILTER_PASS > 1
             float dither = blueNoise(gl_FragCoord.xy).r;
         #endif
 
-        vec4 currPos = projectAndDivide(gbufferModelViewProjectionInverse, vec3((texel + 0.5) * texelSize, depth) * 2.0 - 1.0 - vec3(taaOffset, 0.0));
+        vec4 currPos = screenToPlayerPos(vec3(internalTexelSize * (texel + 0.5), depth));
 
-		vec2 sampleDir = kernel[FILTER_PASS ^ (frameCounter & 1)];
+        #if FILTER_PASS > 1
+		    vec2 sampleDir = kernel[FILTER_PASS ^ (frameCounter & 1)] * min1(mat.roughness * 40.0);
+        #else
+            vec2 sampleDir = kernel[FILTER_PASS ^ (frameCounter & 1)];
+        #endif
+
         float temporalWeight = (isnan(currData.w) ? 0.0 : clamp(currData.w, 0.0, 32.0)) * sqrt(REFLECTION_SAMPLES);
         vec4 samples = vec4(0.0);
         float weights = 0.0;
 
-        #if FILTER_PASS < 4 
+        #if FILTER_PASS < 2 
             vec2 samplePos = gl_FragCoord.xy - sampleDir;
             for (int i = 0; i < 5; i++, samplePos += 0.5 * sampleDir) 
         #else
@@ -62,29 +62,18 @@
         #endif
         {
             ivec2 sampleTexel = ivec2(samplePos);
-            #ifdef REFLECTION_HALF_RES
-                ivec2 sampleCoord = 2 * sampleTexel + checker2x2(frameCounter);
-            #else
-                ivec2 sampleCoord = sampleTexel;
-            #endif
 
-            if (clamp(sampleCoord, ivec2(0), ivec2(renderSize) - 1) == sampleCoord) {
-                #ifdef REFLECTION_HALF_RES
-                    vec4 sampleData = texelFetch(colortex2, clamp(sampleTexel, ivec2(0), ivec2(floor(renderSize * 0.5)) - 1), 0);
-                #else
-                    vec4 sampleData = texelFetch(colortex2, sampleCoord, 0);
-                #endif
+            if (clamp(sampleTexel, ivec2(0), ivec2(internalScreenSize) - 1) == sampleTexel) {
+                vec4 sampleData = texelFetch(colortex2, sampleTexel, 0);
 
                 if (!any(isnan(sampleData))) {
-                    vec3 sampleNormal = octDecode(unpackExp4x8(texelFetch(colortex9, sampleCoord, 0).r).zw);
-                    float sampleRoughness = sqr(1.0 - unpackUnorm4x8(texelFetch(colortex8, sampleCoord, 0).g).g);
-                    vec3 samplePos = screenToPlayerPos(vec3((sampleCoord + 0.5) * texelSize, texelFetch(depthtex1, sampleCoord, 0).x)).xyz;
+                    vec3 sampleNormal = octDecode(unpackExp4x8(texelFetch(colortex9, sampleTexel, 0).r).zw);
+                    float sampleRoughness = sqr(1.0 - unpackUnorm4x8(texelFetch(colortex8, sampleTexel, 0).g).g);
 
                     float sampleWeight = exp(-temporalWeight * (
-                          DENOISER_DEPTH_WEIGHT * abs(dot(mat.geoNormal, currPos.xyz - samplePos.xyz))
+                          DENOISER_DEPTH_WEIGHT * abs(dot(mat.geoNormal, currPos.xyz - screenToPlayerPos(vec3((sampleTexel + 0.5) * internalTexelSize, texelFetch(depthtex1, sampleTexel, 0).x)).xyz))
                         + DENOISER_NORMAL_WEIGHT * (-dot(sampleNormal, mat.textureNormal) * 0.5 + 0.5)
-                        + abs(mat.roughness - sampleRoughness)
-                        + 0.0035 * exp(-16.0 * mat.roughness) * length(sampleDir) * min(abs(log2(sampleData.r + sampleData.g + sampleData.b) - currLogLum), 4.0)
+                        + 3.0 * abs(mat.roughness - sampleRoughness)
                         )
                     );
 

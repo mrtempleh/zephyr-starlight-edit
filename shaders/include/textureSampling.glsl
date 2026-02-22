@@ -19,25 +19,29 @@
 
             for (int i = 0; i < 4; i++) {
                 ivec2 offset = ivec2(i & 1, i >> 1);
-                ivec2 sampleCoord = clamp(ivec2(texel) + offset, ivec2(0), ivec2(floor(renderSize * rcp(INDIRECT_LIGHTING_RES))) - 1);
+                ivec2 sampleCoord = clamp(ivec2(texel) + offset, ivec2(0), ivec2(floor(internalScreenSize * rcp(INDIRECT_LIGHTING_RES))) - 1);
                 ivec2 sampleTexel = clamp(sampleCoord * INDIRECT_LIGHTING_RES
                     #if INDIRECT_LIGHTING_RES == 2
                         + checker2x2(frameCounter - 1)
                     #elif INDIRECT_LIGHTING_RES == 4
                         + checker4x4(frameCounter - 1)
                     #endif
-                , ivec2(0), ivec2(renderSize) - 1);
+                , ivec2(0), ivec2(internalScreenSize) - 1);
 
                 vec4 sampleData = texelFetch(tex, sampleCoord, 0);
 
-                float sampleWeight = exp(
-                    -64.0 * length(normal * dot(normal, currPos + cameraVelocity) - texelFetch(colortex0, sampleTexel, 0).rgb)
-                )
-                    * (1.0 - abs(texel.x - floor(texel.x + offset.x))) 
-                    * (1.0 - abs(texel.y - floor(texel.y + offset.y)));
+                if (!any(isnan(sampleData)) && sampleData != vec4(0.0)) {
+                    vec3 depth = normal * dot(normal, currPos + cameraVelocity);
 
-                samples += sampleWeight * sampleData;
-                weights += sampleWeight;
+                    float sampleWeight = exp(
+                        -1024.0 * length(depth - texelFetch(colortex0, sampleTexel, 0).rgb) * inversesqrt(lengthSquared(depth))
+                    )
+                        * smoothstep(0.0, 1.0, 1.0 - abs(fract(texel.x) - offset.x)) 
+                        * smoothstep(0.0, 1.0, 1.0 - abs(fract(texel.y) - offset.y));
+
+                    samples += sampleWeight * sampleData;
+                    weights += sampleWeight;
+                }
             }
 
             if (weights > 0.0001 && !any(isnan(samples))) return samples / weights;
@@ -62,17 +66,17 @@
                         #elif INDIRECT_LIGHTING_RES == 4
                             + checker4x4(frameCounter)
                         #endif
-                    , ivec2(0), ivec2(renderSize) - 1);
+                    , ivec2(0), ivec2(internalScreenSize) - 1);
 
                     vec3 sampleNormal = octDecode(unpack2x8(texelFetch(colortex9, texel, 0).x & 65535u));
                     vec3 sampleData = texelFetch(colortex2, sampleCoord, 0).rgb;
 
                     float sampleWeight = exp(-1.0 * (
-                        + 16.0 * abs(dot(currPos.xyz - screenToPlayerPos(vec3(vec2(texel + 0.5) * texelSize, texelFetch(depthtex1, texel, 0).x)).xyz, geoNormal))
+                        + 16.0 * abs(dot(currPos.xyz - screenToPlayerPos(vec3(vec2(texel + 0.5) * internalTexelSize, texelFetch(depthtex1, texel, 0).x)).xyz, geoNormal))
                         + 4.0  * (-dot(sampleNormal, textureNormal) * 0.5 + 0.5)
                     ))
-                        * (1.0 - abs(uv.x - floor(uv.x + offset.x))) 
-                        * (1.0 - abs(uv.y - floor(uv.y + offset.y)));
+                        * (1.0 - abs(fract(uv.x) - offset.x)) 
+                        * (1.0 - abs(fract(uv.y) - offset.y));
 
                     radiance += sampleWeight * sampleData;
                     weights += sampleWeight;

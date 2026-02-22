@@ -15,40 +15,41 @@ layout (location = 0) out vec4 history;
 
 void main ()
 {   
-    ivec2 srcTexel = ivec2(TAAU_RENDER_SCALE * gl_FragCoord.xy);
-    vec2 dstTexel = gl_FragCoord.xy;
+    ivec2 texel = ivec2(gl_FragCoord.xy);
 
-    //ivec2 srcTexel = ivec2(floor(TAAU_RENDER_SCALE * (gl_FragCoord.xy + R2(frameCounter & 255u) - 0.5)));
-    //vec2 dstTexel = floor(texelSize * screenSize * (vec2(srcTexel) + 0.5 - 0.5 * renderSize * taaOffset));
-
-    vec2 coord = floor(gl_FragCoord.xy * pixelSize * renderSize - 0.499);
-    bool isUnderSample = true;
-
-    for (int i = frameCounter; i < frameCounter + 4; i++) {
-        if (ivec2(screenSize * texelSize * (coord + vec2(i & 1, (i >> 1) & 1) + 0.5 + taaOffset * renderSize)) == ivec2(gl_FragCoord.xy)) {
-            isUnderSample = false;
-            break;
-        }
-    }
+    #if TAA_UPSCALING_FACTOR < 100 
+        ivec2 srcTexel = ivec2(TAAU_RENDER_SCALE * gl_FragCoord.xy);
+        ivec2 dstTexel = ivec2((vec2(srcTexel) - internalScreenSize * taaOffset * 0.5 + 0.5) / TAAU_RENDER_SCALE);
+    #else
+        ivec2 srcTexel = texel;
+        ivec2 dstTexel = srcTexel;
+    #endif
 
     vec4 currData = texelFetch(colortex7, srcTexel, 0) / EXPONENT_BIAS;
-    vec2 uv = gl_FragCoord.xy / screenSize;
+    vec2 uv = texelSize * gl_FragCoord.xy;
 
-    float depth = 1.0;
+    float depth = texelFetch(
+        #ifdef TAA_REFLECTION_DEPTH
+            colortex13, 
+        #else
+            depthtex0,
+        #endif
+    srcTexel, 0).r;
 
-    for (int x = -1; x <= 1; x++) 
-		for (int y = -1; y <= 1; y++)
-            #ifdef TAA_VIRTUAL_DEPTH
-			    depth = min(depth, texelFetch(colortex13, clamp(srcTexel + ivec2(x, y), ivec2(0), ivec2(renderSize) - 1), 0).r);
+    for (int i = 0; i < 4; i++) {
+        depth = min(depth, texelFetch(
+            #ifdef TAA_REFLECTION_DEPTH
+                colortex13, 
             #else
-                depth = min(depth, texelFetch(depthtex1, clamp(srcTexel + ivec2(x, y), ivec2(0), ivec2(renderSize) - 1), 0).r);
+                depthtex0,
             #endif
+        clamp(srcTexel + 2 * ivec2(i & 1, i >> 1) - 1, ivec2(0), ivec2(internalScreenSize) - 1), 0).r);
+    }
 
     vec4 currPos = screenToPlayerPos(vec3(uv, depth));
     vec4 prevPos = projectAndDivide(gbufferPreviousModelViewProjection, depth == 1.0 ? currPos.xyz : (currPos.xyz + cameraVelocity));
 
     vec3 prevUv = (prevPos.xyz + vec3(taaOffset, 0.0)) * 0.5 + 0.5;
-    vec4 color = currData;
 
     if (saturate(prevUv.xyz) == prevUv.xyz && prevPos.w > 0.0) 
     {
@@ -58,33 +59,39 @@ void main ()
 
         for (int x = -1; x <= 1; x++) 
 			for (int y = -1; y <= 1; y++) {
-                vec3 sampleData = texelFetch(colortex7, clamp(srcTexel + ivec2(x, y), ivec2(0), ivec2(renderSize) - 1), 0).rgb / EXPONENT_BIAS;
+                vec3 sampleData = texelFetch(colortex7, clamp(srcTexel + ivec2(x, y), ivec2(0), ivec2(internalScreenSize) - 1), 0).rgb / EXPONENT_BIAS;
 
 				colorMin = min(colorMin, sampleData);
 				colorMax = max(colorMax, sampleData);
             }
 
         if (!any(isnan(prevData)))
-        {
-            float sampleWeight = isUnderSample ? 0.005 : 1.0;
+        {   
+            #if TAA_UPSCALING_FACTOR < 100
+                bool isUnderSample = dstTexel != texel;
+            #else
+                bool isUnderSample = false;
+            #endif
 
-            color = vec4(exp(mix(log(currData.rgb + 0.0001), log(clamp(prevData.rgb, colorMin, colorMax) + 0.0001), exp(-(16.0 * TAA_VARIANCE_WEIGHT * length(clamp(prevData.rgb, colorMin, colorMax) - prevData.rgb) + TAA_OFFCENTER_WEIGHT * (abs(fract(prevUv.x * screenSize.x) - 0.5) + abs(fract(prevUv.y * screenSize.y) - 0.5)))) * prevData.a / (prevData.a + sampleWeight))) - 0.0001, 1.0);
-            history = vec4(color.rgb, min(prevData.a + sampleWeight, TAA_ACCUMULATION_LIMIT));
-        } else history = vec4(currData.rgb, TAA_ACCUMULATION_LIMIT);
+            float blendWeight = mix(1.0, rcp(max(prevData.a, 1.0)),
+                exp(-(
+                      16.0 * TAA_VARIANCE_WEIGHT * length(clamp(prevData.rgb, colorMin, colorMax) - prevData.rgb)
+                    + TAA_OFFCENTER_WEIGHT * (1.0 - (1.0 - 2.0 * abs(fract(prevUv.x * screenSize.x) - 0.5)) * (1.0 - 2.0 * abs(fract(prevUv.y * screenSize.y) - 0.5)))
+                ))
+            );
+
+            #if TAA_UPSCALING_FACTOR < 100
+                if (isUnderSample && prevData.a > 1.0) blendWeight *= 0.0005;
+            #endif
+
+            // Log weighting from https://www.elopezr.com/temporal-aa-and-the-quest-for-the-holy-trail/
+            currData.rgb = exp(mix(
+                log(clamp(prevData.rgb, colorMin, colorMax) + 0.0001), 
+                log(currData.rgb + 0.0001), 
+                blendWeight)
+            ) - 0.0001;
+
+            history = vec4(currData.rgb, min(prevData.a + (isUnderSample ? 0.0005 : 1.0), rcp(TAA_BLEND_WEIGHT)));
+        } else history = vec4(currData.rgb, rcp(TAA_BLEND_WEIGHT));
     } else history = vec4(currData.rgb, 1.0);
 }
-
-/*
- vec2 coord = floor(gl_FragCoord.xy * pixelSize * renderSize - 0.499);
-    ivec2 srcTexel = ivec2(coord); bool isUnderSample = true;
-
-    for (int i = frameCounter; i < frameCounter + 4; i++) {
-        ivec2 dstTexel = ivec2(screenSize * texelSize * (coord + vec2(i & 1, (i >> 1) & 1) + 0.5 + taaOffset * renderSize));
-
-        if (dstTexel == ivec2(gl_FragCoord.xy)) {
-            isUnderSample = false;
-            srcTexel = ivec2(coord + vec2(i & 1, (i >> 1) & 1));
-            break;
-        }
-    }
-    */

@@ -3,14 +3,14 @@ profile.FAST  = §cFast
 
 option.MAIN_TITLE = Zephyr Starlight
 
-value.MAIN_TITLE.0 = §dv0.2.1
-value.MAIN_TITLE.1 = §cv0.2.1
-value.MAIN_TITLE.2 = §6v0.2.1
-value.MAIN_TITLE.3 = §ev0.2.1
-value.MAIN_TITLE.4 = §av0.2.1
-value.MAIN_TITLE.5 = §bv0.2.1
-value.MAIN_TITLE.6 = §9v0.2.1
-value.MAIN_TITLE.7 = §5v0.2.1
+value.MAIN_TITLE.0 = §dv0.2.2
+value.MAIN_TITLE.1 = §cv0.2.2
+value.MAIN_TITLE.2 = §6v0.2.2
+value.MAIN_TITLE.3 = §ev0.2.2
+value.MAIN_TITLE.4 = §av0.2.2
+value.MAIN_TITLE.5 = §bv0.2.2
+value.MAIN_TITLE.6 = §9v0.2.2
+value.MAIN_TITLE.7 = §5v0.2.2
 
 screen.PATH_TRACING    = Path Tracing
 screen.ATMOSPHERICS    = Atmosphere & Lighting
@@ -30,6 +30,10 @@ screen.PT_DENOISING  = Denoising
 option.SMOOTH_IRCACHE    = Smooth Irradiance Cache
 option.NOISE_METHOD      = Noise Method
 
+value.SMOOTH_IRCACHE.0 = Off
+value.SMOOTH_IRCACHE.1 = Fast
+value.SMOOTH_IRCACHE.2 = Fancy
+
 value.NOISE_METHOD.0 = White Noise
 value.NOISE_METHOD.1 = Blue Noise
 
@@ -37,12 +41,23 @@ option.DIFFUSE_SAMPLES               = Diffuse Samples
 option.DIFFUSE_MAX_RT_DISTANCE       = Diffuse Trace Distance
 option.PT_DIFFUSE_ACCUMULATION_LIMIT = Max Accumulated Frames
 option.DIFFUSE_DENOISE_PASSES        = Denoising Passes
-option.SUNLIGHT_GI_QUALITY           = Sunlight GI Quality
-option.MINIMUM_LIGHT                 = Minimum Light
 option.SAMPLING_METHOD               = Sampling Method
+
 value.SAMPLING_METHOD.0              = Uniform
 value.SAMPLING_METHOD.1              = Cosine Weighted
+
 option.SECONDARY_GI_BRIGHTNESS       = Secondary GI Intensity
+option.MINIMUM_LIGHT                 = Minimum Light
+option.SUNLIGHT_GI_QUALITY           = Sunlight GI Quality
+
+value.SUNLIGHT_GI_QUALITY.0          = Low
+value.SUNLIGHT_GI_QUALITY.1          = Medium
+value.SUNLIGHT_GI_QUALITY.2          = High
+
+option.DIFFUSE_FILTER_QUALITY        = Denoising Quality
+
+value.DIFFUSE_FILTER_QUALITY.0       = Low
+value.DIFFUSE_FILTER_QUALITY.1       = High
 
 option.REFLECTION_SAMPLES               = Reflection Samples
 option.REFLECTION_MAX_RT_DISTANCE       = Reflection Trace Distance
@@ -66,8 +81,10 @@ option.DENOISER_DEPTH_WEIGHT  = Denoiser Depth Weight
 option.DENOISER_NORMAL_WEIGHT = Denoiser Normal Weight
 option.DENOISER_SHARPENING    = Denoiser Sharpness
 
-option.TEMPORAL_PREFILTERING      = Prefiltering
+option.TEMPORAL_PREFILTERING      = Temporal Prefiltering
 option.TEMPORAL_NORMAL_TOLERANCE  = Temporal Normal Tolerance
+
+option.DENOISER_VARIANCE_GUIDE    = Variance Guide
 
 option.IRCACHE_VOXEL_ARRAY_SIZE = Voxel Array Size
 option.IRCACHE_PROBE_ATTEMPTS   = Probe Attempts
@@ -107,6 +124,7 @@ option.SKY_RAYLEIGH_R   = Rayleigh Amount (R)
 option.SKY_RAYLEIGH_G   = Rayleigh Amount (G)
 option.SKY_RAYLEIGH_B   = Rayleigh Amount (B)
 option.NIGHT_BRIGHTNESS = Night Brightness
+option.SKY_MULTISCATTER = Multiple Scattering
 
 option.NORMAL_MAPPING         = Normal Mapping
 option.SPECULAR_MAPPING       = Specular Mapping
@@ -152,21 +170,28 @@ option.WATER_REFRACTED_CAUSTICS = Refracted Caustics
 option.WATER_REFLECTED_CAUSTICS = Reflected Caustics
 option.WATER_CAUSTICS_STRENGTH  = Caustic Strength
 
-option.TAA                    = TAA
-option.TAA_UPSCALING_FACTOR   = TAAU Render Scale
-suffix.TAA_UPSCALING_FACTOR   = %
+option.TAA                     = TAA
+option.TAA_UPSCALING_FACTOR    = Temporal Upscaling
 
-option.TAA_JITTER_SCALE       = TAA Jitter Scale
-option.TAA_ACCUMULATION_LIMIT = Max Frames
-option.TAA_VARIANCE_WEIGHT    = TAA Variance Weight
-option.TAA_OFFCENTER_WEIGHT   = TAA Offcenter Weight
-option.TAA_MIP_SCALE          = TAA Mip Bias
-option.SHARPENING             = Sharpening
+value.TAA_UPSCALING_FACTOR.25  = 25% (Not recommended)
+value.TAA_UPSCALING_FACTOR.33  = 33% (Not recommended)
+value.TAA_UPSCALING_FACTOR.100 = 100% (Off)
+
+suffix.TAA_UPSCALING_FACTOR    = %
+
+option.TAA_JITTER_SCALE       = Jitter Scale
+option.TAA_BLEND_WEIGHT       = Blend Weight
+option.TAA_OFFCENTER_WEIGHT   = Offcenter Rejection
+option.TAA_VARIANCE_WEIGHT    = Variance Rejection
+option.TAA_MIP_SCALE          = Mip Scaling
+option.SHARPENING             = Sharpening Amount
+
+option.TAA_REFLECTION_DEPTH   = Reflection Reprojection
 
 option.DYNAMIC_EXPOSURE             = Dynamic Exposure
 option.ADAPTATION_SPEED             = Adaptation Speed
 option.MANUAL_EXPOSURE              = Manual Exposure
-option.SATURATION                   = Saturation
+option.BRIGHTNESS                   = Brightness
 option.CHROMATIC_ABERRATION         = Chromatic Aberration
 option.CHROMATIC_ABERRATION_SAMPLES = Chromatic Aberration Samples
 
@@ -189,7 +214,6 @@ value.DOF_FOCUS_MODE.1              = Manual
 option.HAND_FOV               = Hand FOV
 option.DISABLE_DENOISING      = Disable Denoising
 option.FORCE_TRIANGLE_TRACING = Force Triangle Tracing
-option.TAA_VIRTUAL_DEPTH      = TAA Virtual Depth Buffer
 
 value.HAND_FOV.0              = Default
 suffix.HAND_FOV               = °

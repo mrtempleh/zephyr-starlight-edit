@@ -25,6 +25,8 @@
     #define END_MARKER 0x00ffffffu
     #define IRCACHE_INV_MARKER uvec2(3154164736u)
 
+    #define TAAU_RENDER_SCALE (0.01 * TAA_UPSCALING_FACTOR)
+
     // Color multiplier to avoid precision issues with dark colors
     #define EXPONENT_BIAS 64.0
 
@@ -39,33 +41,36 @@
         const int colortex7Format =  R11F_G11F_B10F; // scene
         const int colortex8Format =  RG32UI;         // material data 0
         const int colortex10Format = RGBA16F;        // sun/moon geometry (gbuffers -> deferred), post-processing data (composite)
+        const int colortex11Format = R11F_G11F_B10F; // half res sky texture
         const int colortex12Format = R11F_G11F_B10F; // filtered diffuse lighting (deferred), bloom tiles (composite)
         const int colortex13Format = R32F;           // reflection virtual depth buffer for TAA
 
         const int shadowcolor0Format = R8;
         const int shadowcolor1Format = R8;
 
-        const vec4 colortex6ClearColor = vec4(0.0, 0.0, 0.0, 0.0)
+        const vec4 colortex6ClearColor = vec4(0.0, 0.0, 0.0, 1.0)
         const vec4 colortex7ClearColor = vec4(0.0, 0.0, 0.0, 0.0)
         const vec4 colortex13ClearColor = vec4(1.0, 0.0, 0.0, 1.0)
 
         const bool shadowtex0Nearest = true;
         const bool shadowtex1Nearest = true;
 
-        const bool colortex0Clear = false;
-        const bool colortex1Clear = false;
-        const bool colortex2Clear = false;
-        const bool colortex3Clear = false;
-        const bool colortex4Clear = false;
-        const bool colortex5Clear = false;
-        const bool colortex6Clear = false;
-        const bool colortex7Clear = true;
-        const bool colortex8Clear = false;
-        const bool colortex9Clear = false;
+        const bool colortex0Clear  = false;
+        const bool colortex1Clear  = false;
+        const bool colortex2Clear  = false;
+        const bool colortex3Clear  = false;
+        const bool colortex4Clear  = false;
+        const bool colortex5Clear  = false;
+        const bool colortex6Clear  = false;
+        const bool colortex7Clear  = false;
+        const bool colortex8Clear  = false;
+        const bool colortex9Clear  = false;
         const bool colortex10Clear = true;
         const bool colortex11Clear = false;
         const bool colortex12Clear = false;
-        const bool colortex13Clear = true;
+        const bool colortex13Clear = false;
+        const bool colortex14Clear = false;
+        const bool colortex15Clear = false;
     */
 
     // https://discordapp.com/channels/237199950235041794/736928196162879510/1459984859312423152 <3

@@ -65,7 +65,7 @@ for (uint i = 0u; i < 256u && all(greaterThan(voxel, ivec3(0))) && all(lessThan(
                     albedo.rgb *= tr.color;
                 #endif
 
-                if (tr.isTranslucent) albedo = vec4(albedo.a > 0.1 ? albedo : vec4(0.5, 0.5, 0.5, 0.1));
+                if (tr.isTranslucent) albedo = vec4(albedo.a > 0.1 ? albedo : vec4(1.0, 1.0, 1.0, 0.1));
 
                 if (albedo.a > 0.1 || tr.isTranslucent) 
                 {   
@@ -75,22 +75,24 @@ for (uint i = 0u; i < 256u && all(greaterThan(voxel, ivec3(0))) && all(lessThan(
                             if (tr.blockId == 10100) {
                                 tint *= waterTransmittance(min(16.0, dist)) * calcWaterCaustics(ray.origin + ray.direction * dist - voxelOffset, ray.direction, dist);
                             } else {
-                                tint *= mix(vec3(1.0), pow(albedo.rgb, vec3(2.2)), albedo.a);
+                                tint *= mix(vec3(1.0), pow(albedo.rgb, vec3(2.2)), albedo.a * 0.5 + 0.5);
                             }
                         #else
-                            if (tr.blockId != 10100) tint *= mix(vec3(1.0), pow(albedo.rgb, vec3(2.2)), albedo.a);
+                            if (tr.blockId == 10100) tint *= waterTransmittance(min(16.0, dist));
+                            else tint *= mix(vec3(1.0), pow(albedo.rgb, vec3(2.2)), albedo.a);
                         #endif
                     } else {
                         #ifdef RT_SHADOW
                             return vec3(0.0);
                         #else
                             hitResult.dist = dist;
-                            hitResult.albedo = albedo;
+                            hitResult.albedo = tr.blockId == 10100 ? vec4(waterTransmittance(min(16.0, dist)), 1.0) : albedo;
                             hitResult.blockId = tr.blockId;
                             #ifdef SPECULAR_MAPPING
                                 hitResult.specular = tr.textureIndex == 4095u ? textureLod(shadowtex1, texcoord, 0.0) : vec4(0.0);
                             #endif
                             hitResult.normal = normal;
+                            hitResult.translucent = tr.isTranslucent;
                             hitResult.hit = true;
                         #endif
                     }
@@ -111,7 +113,7 @@ for (uint i = 0u; i < 256u && all(greaterThan(voxel, ivec3(0))) && all(lessThan(
 
 #ifdef RT_SHADOW
     return tint;
-#else      
+#else
     hitResult.normal = -sign(dot(ray.direction, hitResult.normal)) * normalize(hitResult.normal);
 
     #ifdef IPBR
@@ -120,7 +122,7 @@ for (uint i = 0u; i < 256u && all(greaterThan(voxel, ivec3(0))) && all(lessThan(
 
     hitResult.albedo = vec4(pow(tint * hitResult.albedo.rgb, vec3(2.2)), hitResult.albedo.a);
     
-    applySpecularMap(hitResult.specular, hitResult.albedo.rgb, hitResult.F0, hitResult.roughness, hitResult.emission);
+    applySpecularMap(hitResult.specular, hitResult.albedo.rgb, hitResult.F0, hitResult.roughness, hitResult.emission, hitResult.sssAmount);
 
     return hitResult;
 #endif

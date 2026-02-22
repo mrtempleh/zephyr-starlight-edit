@@ -11,8 +11,8 @@
 # Information
 
 * Download: https://modrinth.com/shader/zephyr-starlight
-* Minecraft 1.21+ and Iris 1.9+ is recommended
-* For suggestions, ideas and discussions related to this shaderpack, head over to my [Discord server](https://discord.gg/NkReBjBmYQ) or the `#zephyr-starlight-kirilpro` channel in the [shaderLABS](https://discord.gg/RpzWN9S) Discord server.
+* Minecraft 1.21+ and Iris 1.9+ is recommended. OptiFine is not supported
+* For suggestions, ideas and discussions related to this shaderpack, head over to the `#zephyr-starlight-kirilpro` channel in the [shaderLABS](https://discord.gg/RpzWN9S) Discord server.
 * You can support me by becoming a patron: https://www.patreon.com/Kirilpro6284
 
 ## Features
@@ -21,7 +21,8 @@
 * Path traced diffuse, reflections and sun shadows
 * Temporal anti-aliasing and upscaling
 * Normal & specular mapping support
-* Basic sky rendering
+* Physically based sky rendering
+    * Hillaire multi-scattering approximation
 * Sparse irradiance cache for diffuse multi-bounce approximation
 * Reflection motion vector calculation (no TAA ghosting on reflections)
 * Spatiotemporal denoising
@@ -55,7 +56,7 @@
 
 ## TODO / Known Issues
 
-* TAAU looks *very* bad currently. I don't recommend using it unless you really need FPS.
+* ~~TAAU looks *very* bad currently. I don't recommend using it unless you really need FPS.~~
 * ~~Currently, you need a labPBR resource pack enabled for this shaderpack to function properly.~~
 * Rain particles are not rendered.
 * Reflections (especially mirror-like ones) show a lot of noise and flickering. Lowering Irradiance Cache -> Update Interval and increasing reflection samples in path tracing settings can improve it.

@@ -54,10 +54,10 @@
 
         float centerHeight = calcWaterHeight(offsetCoord);
 
-        float dfdx = calcWaterHeight(offsetCoord + vec3(0.0005, 0.0, 0.0));
-        float dfdz = calcWaterHeight(offsetCoord + vec3(0.0, 0.0, 0.0005));
+        float dfdx = calcWaterHeight(offsetCoord + vec3(0.00025, 0.0, 0.0));
+        float dfdz = calcWaterHeight(offsetCoord + vec3(0.0, 0.0, 0.00025));
 
-        return vec3(rcp(0.0005) * (vec2(dfdx, dfdz) - centerHeight), rcp(max(WATER_WAVE_HEIGHT, 0.0001)));
+        return vec3(rcp(0.00025) * (vec2(dfdx, dfdz) - centerHeight), rcp(max(WATER_WAVE_HEIGHT, 0.0001)));
     }
 
     #ifndef STAGE_BEGIN
@@ -69,7 +69,7 @@
   
         float calcWaterCaustics (vec3 playerPos, vec3 rayDir, float dist)
         {
-            return exp(WATER_CAUSTICS_STRENGTH * rayDir.y * 32.0 * min(log(dist + 1.0), 4.0) * (dot(rayDir, normalize(sampleWaterNormal(playerPos + cameraPosition).xzy)) - rayDir.y));
+            return exp(WATER_CAUSTICS_STRENGTH * 32.0 * sqrt(abs(rayDir.y)) * min(log(dist + 1.0), 4.0) * (dot(rayDir, normalize(sampleWaterNormal(playerPos + cameraPosition).xzy)) - rayDir.y));
         }
     #endif
 

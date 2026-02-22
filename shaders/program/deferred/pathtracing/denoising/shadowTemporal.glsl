@@ -18,15 +18,15 @@ layout (location = 0) out vec4 filteredData;
 void main ()
 {   
     ivec2 texel = ivec2(gl_FragCoord.xy);
+
     #ifdef SHADOW_HALF_RES
         ivec2 srcTexel = texel >> 1;
         ivec2 dstTexel = 2 * srcTexel + checker2x2(frameCounter);
     #else
         ivec2 srcTexel = texel;
-        ivec2 dstTexel = srcTexel;
     #endif
 
-    vec2 uv = gl_FragCoord.xy * texelSize;
+    vec2 uv = internalTexelSize * gl_FragCoord.xy;
 
     float depth = texelFetch(depthtex1, texel, 0).r;
     filteredData = texelFetch(colortex2, srcTexel, 0);
@@ -58,17 +58,15 @@ void main ()
     #endif
 
     vec4 prevUv = projectAndDivide(gbufferPreviousModelViewProjection, playerPos.xyz + cameraVelocity);
-    #if !defined TAA && defined TEMPORAL_PREFILTERING
-        prevUv.xyz = (prevUv.xyz + vec3(texelSize * (R2(frameCounter & 7u) - 0.5), 0.0)) * 0.5 + 0.5;
-    #else
-        prevUv.xyz = (prevUv.xyz + vec3(taaOffsetPrev, 0.0)) * 0.5 + 0.5;
-    #endif
+        
+    prevUv.xy += taaOffset;
+    prevUv.xyz = prevUv.xyz * 0.5 + 0.5;
 
     vec4 lastFrame;
 
     if (floor(prevUv.xy) == vec2(0.0) && prevUv.w > 0.0)
     {   
-        lastFrame = sampleHistory(colortex5, playerPos.xyz, normal, prevUv.xy, renderSize);
+        lastFrame = sampleHistory(colortex5, playerPos.xyz, normal, prevUv.xy, internalScreenSize);
     }
     else
     {
@@ -77,14 +75,17 @@ void main ()
 
     if (any(isnan(lastFrame))) lastFrame = vec4(0.0, 0.0, 0.0, 1.0);
 
-    float blendWeight = rcp(lastFrame.w);
+    float blendWeight = mix(1.0, rcp(lastFrame.w),
+        exp(-0.5 * (1.0 - (1.0 - 2.0 * abs(fract(prevUv.x * internalScreenSize.x) - 0.5)) * (1.0 - 2.0 * abs(fract(prevUv.y * internalScreenSize.y) - 0.5))))
+    );
+
     #ifdef SHADOW_HALF_RES
-        bool isUnderSample = ((texel & 1) != checker2x2(frameCounter)) && lastFrame.w > 1.0;
+        bool isUnderSample = dstTexel != texel;
     #else
         bool isUnderSample = false;
     #endif
 
-    if (isUnderSample) blendWeight *= 0.0025;
+    if (isUnderSample && lastFrame.w > 1.0) blendWeight *= 0.0005;
 
     filteredData.rgb = mix(
         #ifdef SHADOW_SKIP_CLIPPING
@@ -96,5 +97,5 @@ void main ()
         blendWeight
     );
 
-    filteredData.w = min(lastFrame.w + (isUnderSample ? 0.0025 : 1.0), PT_SHADOW_ACCUMULATION_LIMIT);
+    filteredData.w = min(lastFrame.w + (isUnderSample ? 0.0005 : 1.0), PT_SHADOW_ACCUMULATION_LIMIT);
 }

@@ -10,7 +10,7 @@ layout (location = 0) out vec4 color;
 
 void main ()
 {   
-    vec2 uv = gl_FragCoord.xy / screenSize;
+    vec2 uv = gl_FragCoord.xy * texelSize;
 
     vec2 sampleDir = (mix(vec2(0.5), uv, 500.0 / (500.0 + CHROMATIC_ABERRATION)) - uv) * rcp(CHROMATIC_ABERRATION_SAMPLES) * 0.25;
     vec2 samplePos = uv + sampleDir * blueNoise(gl_FragCoord.xy).r;

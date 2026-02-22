@@ -17,11 +17,15 @@ layout (location = 0) out uvec4 colortex1Out;
 
 void main ()
 {
-    if (any(greaterThan(gl_FragCoord.xy, screenSize))) discard;
+    #if TAA_UPSCALING_FACTOR < 100
+        if (any(greaterThan(gl_FragCoord.xy + 0.5, internalScreenSize))) {
+            return;
+        }
+    #endif
     
     vec4 albedo = texture(gtexture, vsout.texcoord) * vec4(vsout.vertexColor, 1.0);
 
-    colortex1Out = uvec4(packUnorm4x8(albedo.a > 0.1 ? albedo : vec4(0.5, 0.5, 0.5, 0.1)), vsout.blockId, 0u, 1u);
+    colortex1Out = uvec4(packUnorm4x8(albedo.a > 0.1 ? albedo : vec4(1.0, 1.0, 1.0, 0.1)), vsout.blockId, 0u, 1u);
 }
 
 #endif
@@ -45,12 +49,16 @@ void main ()
         gl_Position.xy *= handScale / gl_ProjectionMatrix[1].y;
     #endif
     
-    gl_Position.xy = mix(-gl_Position.ww, gl_Position.xy, TAAU_RENDER_SCALE);
     gl_Position.xy += gl_Position.w * taaOffset;
+    
+    #if TAA_UPSCALING_FACTOR < 100
+        gl_Position.xy = mix(-gl_Position.ww, gl_Position.xy, TAAU_RENDER_SCALE);
+    #endif
 
     vsout.texcoord = mat4x2(gl_TextureMatrix[0]) * gl_MultiTexCoord0;
     vsout.vertexColor = gl_Color.rgb;
     vsout.blockId = (pack2x8(octEncode(alignNormal(transpose(mat3(gbufferModelView)) * gl_NormalMatrix * gl_Normal, 0.01))) << 16u) |
+
     #ifdef STAGE_HAND
         (currentRenderedItemId & 16383u) | 0x00004000u;
     #else

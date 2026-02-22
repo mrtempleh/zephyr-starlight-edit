@@ -24,10 +24,14 @@
         return uint(clamp(0.5 * log2(lengthSquared(exp2(stepSize) * ((floor(exp2(-stepSize) * (cameraMod16 + pos)) + 0.5)) - cameraMod16)) - log2(IRCACHE_CASCADE_RES / 16.0), 0.0, 5.0));
     }
 
-    IrradianceSum irradianceCache (vec3 pos, vec3 normal, uint rank)
+    ivec4 playerToVoxelPos (vec3 pos, vec3 normal, uint lod)
+    {
+        return ivec4(((cameraPositionInt >> max(0, int(lod) - 2)) << max(0, 2 - int(lod))) + ivec3(floor(exp2(2.0 - float(lod)) * (vec3(cameraPositionInt & ((1u << max(0, int(lod) - 2)) - 1u)) + cameraPositionFract + pos) + normal * 0.475)), lod);
+    }
+
+    IrradianceSum irradianceCache (vec3 pos, vec3 normal, uint rank, uint lod)
     {   
-        uint lod = selectCascade(pos + normal * 0.005);
-        ivec4 voxelPos = ivec4(((cameraPositionInt >> max(0, int(lod) - 2)) << max(0, 2 - int(lod))) + ivec3(floor(exp2(2.0 - float(lod)) * (vec3(cameraPositionInt & ((1u << max(0, int(lod) - 2)) - 1u)) + cameraPositionFract + pos) + normal * 0.475)), lod);
+        ivec4 voxelPos = playerToVoxelPos(pos, normal, lod);
 
         uint packedPos = packCachePos(voxelPos);
         uint hashedPos = hashCachePos(voxelPos);
@@ -39,7 +43,7 @@
 
         for (uint attempt = 0u; attempt < uint(IRCACHE_PROBE_ATTEMPTS); attempt++)
         {   
-            uint index = (hashedPos + attempt * attempt) % IRCACHE_VOXEL_ARRAY_SIZE;
+            uint index = (hashedPos + (attempt * attempt + attempt) / 2) % IRCACHE_VOXEL_ARRAY_SIZE;
 
             if (ircache.entries[index].packedPos == packedPos && ircache.entries[index].radiance != IRCACHE_INV_MARKER) {
                 if (atomicMin(ircache.entries[index].rank, rank + 1u) >= rank + 1u) {
@@ -54,7 +58,7 @@
 
         for (uint attempt = 0u; attempt < uint(IRCACHE_PROBE_ATTEMPTS); attempt++)
         {   
-            uint index = (hashedPos + attempt * attempt) % IRCACHE_VOXEL_ARRAY_SIZE;
+            uint index = (hashedPos + (attempt * attempt + attempt) / 2) % IRCACHE_VOXEL_ARRAY_SIZE;
 
             if (atomicCompSwap(ircache.entries[index].packedPos, 0u, packedPos) == 0u) {
                 ircache.entries[index].traceOrigin = (packedOrigin.x << 24u) | (packedOrigin.y << 16u) | (packedOrigin.z << 8u) | (packedNormal.x << 4u) | (packedNormal.y);
@@ -67,7 +71,16 @@
         return IrradianceSum(vec3(0.0), vec3(0.0));
     }
 
-    #ifdef SMOOTH_IRCACHE
+    IrradianceSum irradianceCache (vec3 pos, vec3 normal, uint rank)
+    {   
+        uint lod = selectCascade(pos + normal * 0.005);
+       
+        return irradianceCache(pos, normal, rank, lod);
+    }
+
+    #if SMOOTH_IRCACHE == 0
+        #define irradianceCacheSmooth(pos, normal, rank, rand) irradianceCache(pos, normal, rank)
+    #elif SMOOTH_IRCACHE == 1
         IrradianceSum irradianceCacheSmooth (vec3 pos, vec3 normal, uint rank, vec2 rand)
         {
             float scale = exp2(float(selectCascade(pos + normal * 0.005)) - 2.0);
@@ -78,20 +91,62 @@
             return irradianceCache(pos + dir * min(1.0, TraceGenericRay(Ray(pos + normal * 0.003, dir), 1.0, false, false).dist - 0.001), normal, rank);
         }
     #else
-        #define irradianceCacheSmooth(pos, normal, rank, rand) irradianceCache(pos, normal, rank)
+        IrradianceSum irradianceCacheSmooth (vec3 pos, vec3 normal, uint rank, vec2 rand)
+        {
+            vec3 offsetPos = pos + normal * 0.005; 
+            uint lod = selectCascade(offsetPos);
+
+            float scale = exp2(floor(2.0 - lod));
+            float invScale = exp2(floor(lod - 2.0));
+
+            vec3 origin = (offsetPos + cameraMod16) * scale;
+
+            origin = (floor(origin) * 2.0 - floor(origin + 0.5) + 1.0) * invScale - (offsetPos + cameraMod16);
+
+            mat3 tbn = tbnNormal(normal);
+
+            IrradianceSum result = IrradianceSum(vec3(0.0), vec3(0.0));
+            float weights = 0.0;
+
+            for (int i = 0; i < 4; i++) {
+                vec3 offset = tbn * (invScale * vec3((i & 1) - 0.5, (i >> 1) - 0.5, 0.0));
+                offset *= min1(TraceGenericRay(Ray(offsetPos, offset), 1.0025, true, false).dist - 0.002);
+
+                IrradianceSum sampleData = irradianceCache(pos + offset, normal, rank, lod);
+
+                if (sampleData.diffuseIrradiance != vec3(0.0)) {
+                    vec3 posDiff = scale * abs(origin - offset);
+
+                    float sampleWeight = smoothstep(0.0001, 1.0, abs(1.0 - posDiff.x)) 
+                                       * smoothstep(0.0001, 1.0, abs(1.0 - posDiff.y)) 
+                                       * smoothstep(0.0001, 1.0, abs(1.0 - posDiff.z));
+                                       
+                    result.diffuseIrradiance += sampleWeight * sampleData.diffuseIrradiance;
+                    result.directIrradiance += sampleWeight * sampleData.directIrradiance;
+
+                    weights += sampleWeight;
+                }
+            }
+
+            float weightInv = rcp(max(0.0000000001, weights));
+
+            return IrradianceSum(
+                result.diffuseIrradiance * weightInv,
+                result.directIrradiance * weightInv
+            );
+        }
     #endif
 
-    IrradianceSum irradianceCacheView (vec3 pos, vec3 normal)
+    IrradianceSum irradianceCacheSilent (vec3 pos, vec3 normal, uint lod)
     {   
-        uint lod = selectCascade(pos + normal * 0.005);
-        ivec4 voxelPos = ivec4(((cameraPositionInt >> max(0, int(lod) - 2)) << max(0, 2 - int(lod))) + ivec3(floor(exp2(2.0 - float(lod)) * (vec3(cameraPositionInt & ((1u << max(0, int(lod) - 2)) - 1u)) + cameraPositionFract + pos) + normal * 0.475)), lod);
+        ivec4 voxelPos = playerToVoxelPos(pos, normal, lod);
 
         uint hashedPos = hashCachePos(voxelPos);
         uint packedPos = packCachePos(voxelPos);
 
         for (uint attempt = 0u; attempt < uint(IRCACHE_PROBE_ATTEMPTS); attempt++)
         {   
-            uint index = (hashedPos + attempt * attempt) % IRCACHE_VOXEL_ARRAY_SIZE;
+            uint index = (hashedPos + (attempt * attempt + attempt) / 2) % IRCACHE_VOXEL_ARRAY_SIZE;
 
             if (ircache.entries[index].packedPos == packedPos && ircache.entries[index].radiance != uvec2(0u)) {
                 return IrradianceSum(unpackHalf4x16(ircache.entries[index].radiance).rgb, unpack3x10(ircache.entries[index].direct));
@@ -99,6 +154,11 @@
         }
 
         return IrradianceSum(vec3(0.0), vec3(0.0));
+    }
+
+    IrradianceSum irradianceCacheSilent (vec3 pos, vec3 normal)
+    {   
+        return irradianceCacheSilent(pos, normal, selectCascade(pos + normal * 0.005));
     }
 
 #endif

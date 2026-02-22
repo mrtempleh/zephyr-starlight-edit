@@ -2,4 +2,4 @@
 
 #define STAGE_SETUP
 
-#include "/program/compute/sky/evalTransmittance.glsl"
+#include "/program/compute/lut/transmittance.glsl"

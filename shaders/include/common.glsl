@@ -11,22 +11,8 @@
     #define INFINITY     exp2(128.0)
     #define luminance(c) dot(c, vec3(0.2126, 0.7152, 0.0722))
     #define torad(x)     (0.01745329 * x)
-    #define screenSize   vec2(viewWidth, viewHeight)
 
-    vec4 gamma (vec4 color)
-    {
-        return vec4(pow(color.rgb, vec3(2.2)), color.a);
-    }
-
-    vec4 unpackHalf4x16 (uvec2 t)
-    {
-        return vec4(unpackHalf2x16(t.x), unpackHalf2x16(t.y));
-    }
-
-    uvec2 packHalf4x16 (vec4 t)
-    {
-        return uvec2(packHalf2x16(t.xy), packHalf2x16(t.zw));
-    }
+    #include "/include/util.glsl"
 
     float lift (float x, float a)
     {
@@ -71,6 +57,16 @@
     vec3 sqr (vec3 x)
     {
         return x * x;
+    }
+
+    vec4 unpackHalf4x16 (uvec2 t)
+    {
+        return vec4(unpackHalf2x16(t.x), unpackHalf2x16(t.y));
+    }
+
+    uvec2 packHalf4x16 (vec4 t)
+    {
+        return uvec2(packHalf2x16(t.xy), packHalf2x16(t.zw));
     }
 
     uint pack3x10 (vec3 t)
@@ -138,43 +134,6 @@
         return uvec2(t >> 16u, t & 65535u);
     }
 
-    // https://twitter.com/Stubbesaurus/status/937994790553227264
-
-    vec2 octEncode (in vec3 n) 
-    {
-        n.xyz /= abs(n.x) + abs(n.y) + abs(n.z);
-        float t = max0(-n.y);
-        n.x += (n.x > 0.0) ? t : -t;
-        n.z += (n.z > 0.0) ? t : -t;
-        return n.xz * 0.5 + 0.5;
-    }
-
-    vec3 octDecode (in vec2 f)
-    {
-        f = f * 2.0 - 1.0;
- 
-        vec3 n = vec3(f.x, 1.0 - abs(f.x) - abs(f.y), f.y);
-        float t = max0(-n.y);
-        n.x += n.x >= 0.0 ? -t : t;
-        n.z += n.z >= 0.0 ? -t : t;
-        return normalize(n);
-    }
-
-    mat3 tbnNormalTangent (vec3 normal, vec4 tangent) 
-    {
-        return mat3(tangent.xyz, cross(tangent.xyz, normal) * sign(tangent.w), normal);
-    }
-
-    mat3 tbnNormal (vec3 normal) 
-    {
-        return tbnNormalTangent(normal, vec4(normalize(cross(normal, vec3(0.0, 1.0, (normal.y * normal.z) < 0.0 ? 1.0 : -1.0))), 1.0));
-    }
-
-    vec3 sampleSunDir (vec3 lightDir, vec2 dither)
-    {
-        return tbnNormal(lightDir) * vec3(SHADOW_SOFTNESS * sqrt(dither.y) * vec2(cos(TWO_PI * dither.x), sin(TWO_PI * dither.x)), 1.0);
-    }
-
     float maxOf (vec3 t) 
     {
         return max(max(t.x, t.y), t.z);
@@ -195,11 +154,6 @@
         return min(min(t.x, t.y), min(t.z, t.w));
     }
 
-    vec3 alignNormal (vec3 normal, float eps) 
-    {
-        return normalize(normal * vec3(greaterThan(abs(normal), vec3(eps))));
-    }
-
     float R1 (uint t)
     {
         return fract(t * 0.6180339);
@@ -213,86 +167,6 @@
     vec3 R3 (uint t)
     {
         return fract(vec3(t) * vec3(0.8191725, 0.6710435, 0.5497004));
-    }
-
-    // https://discordapp.com/channels/237199950235041794/525510804494221312/1416364500591837216
-
-    vec3 blueNoise (vec2 coord) 
-    {
-        return texelFetch(
-            noisetex,
-            ivec3(ivec2(coord) % 128, frameCounter % 64),
-            0
-        ).rgb;
-    }
-
-    // R2 sequence from
-    // https://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
-
-    vec3 blueNoise (vec2 coord, int i) 
-    {
-        const float g = 1.324717;
-
-        return blueNoise(coord + 128.0 * fract(0.5 + i * rcp(vec2(g, g * g))));
-    }
-
-    mat2 rotate (float theta)
-    {
-        float cosTheta = cos(theta);
-        float sinTheta = sin(theta);
-
-        return mat2(cosTheta, -sinTheta, sinTheta, cosTheta);
-    }
-
-    vec3 dither11f (vec2 coord, vec3 color)
-    {
-        return color + (blueNoise(coord) - 0.5) * uintBitsToFloat(floatBitsToUint(max(vec3(0.000061035156), color)) & uvec3(0xff800000u)) * vec3(0.015625, 0.015625, 0.03125);
-    }
-
-    // Adapted from https://www.youtube.com/watch?v=Qz0KTGYJtUk&t=674s
-
-    uint randomInt (inout uint state)
-    {
-        state = state * 747796405u + 2891336453u;
-        uint result = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
-        return (result >> 22u) ^ result;
-    }
-
-    float randomValue (inout uint state) 
-    {
-        return randomInt(state) * rcp(4294967296.0);
-    }
-
-    float normalDist (inout uint state)
-    {
-        return sqrt(-log2(randomValue(state))) * cos(TWO_PI * randomValue(state));
-    }
-
-    vec3 randomDir (inout uint state)
-    {	
-        return normalize(vec3(normalDist(state), normalDist(state), normalDist(state)));
-    }
-
-    vec3 randomHemisphereDir (vec3 normal, inout uint state)
-    {
-        vec3 dir = randomDir(state);
-        return dir * sign(dot(dir, normal));
-    }
-
-    uint packPosition (ivec3 pos) 
-    {
-        pos &= ivec3(2047, 1023, 2047);
-        return (pos.x << 21) | (pos.y << 11) | (pos.z);
-    }
-
-    ivec3 unpackPosition (uint pack)
-    {
-        return ((ivec3(pack >> 21, pack >> 11, pack) - cameraPositionInt + ivec3(1024, 512, 1024)) & ivec3(2047, 1023, 2047)) + cameraPositionInt - ivec3(1024, 512, 1024);
-    }
-
-    uint hashPosition (ivec3 pos)
-    {
-        return (uint(pos.x) * 73856093) ^ (uint(pos.y) * 19349663) ^ (uint(pos.z) * 83492791);
     }
 
 #endif

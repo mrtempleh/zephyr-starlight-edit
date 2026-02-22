@@ -18,7 +18,11 @@ layout (location = 0) out vec4 colortex0Out;
 
 void main ()
 {
-    if (any(greaterThan(gl_FragCoord.xy, screenSize))) discard;
+    #if TAA_UPSCALING_FACTOR < 100
+        if (any(greaterThan(gl_FragCoord.xy + 0.5, internalScreenSize))) {
+            return;
+        }
+    #endif
 
     colortex0Out = vsout.vertexColor;
 }
@@ -41,15 +45,19 @@ void main ()
     }
 
     vec3 vertexPosition = (gbufferModelViewProjectionInverse * ftransform()).xyz;
+    vertexPosition.xz *= rotate(torad(-(SUN_AZIMUTH_ROTATION)));
 
-    gl_Position = ftransform();
+    gl_Position = gbufferModelViewProjection * vec4(vertexPosition, 1.0);
 
-    gl_Position.xy = mix(-gl_Position.ww, gl_Position.xy, TAAU_RENDER_SCALE);
     gl_Position.xy += gl_Position.w * taaOffset;
+    
+    #if TAA_UPSCALING_FACTOR < 100
+        gl_Position.xy = mix(-gl_Position.ww, gl_Position.xy, TAAU_RENDER_SCALE);
+    #endif
 
     vsout.vertexColor = gl_Color;
 
-    if (renderStage == MC_RENDER_STAGE_STARS) vsout.vertexColor.rgb *= lightTransmittance(normalize(vertexPosition));
+    if (renderStage == MC_RENDER_STAGE_STARS) vsout.vertexColor.rgb *= STAR_BRIGHTNESS * lightTransmittance(normalize(vertexPosition));
 }
 
 #endif

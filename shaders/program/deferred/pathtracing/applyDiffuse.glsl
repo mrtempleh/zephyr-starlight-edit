@@ -32,13 +32,15 @@ void main ()
 
     if (depth == 1.0) return;
 
-    vec3 currPos = screenToPlayerPos(vec3(gl_FragCoord.xy * texelSize, depth)).xyz;
+    vec2 uv = internalTexelSize * gl_FragCoord.xy;
+
+    vec3 currPos = screenToPlayerPos(vec3(uv, depth)).xyz;
     DeferredMaterial mat = unpackMaterialData(texel);
 
     vec3 diffuseIrradiance = upsampleRadiance(currPos, mat.geoNormal, mat.textureNormal);
 
     #ifdef DEBUG_IRCACHE
-        if (!hideGUI) diffuseIrradiance = irradianceCacheView(currPos, mat.geoNormal).diffuseIrradiance;
+        if (!hideGUI) diffuseIrradiance = irradianceCacheSilent(currPos, mat.geoNormal).diffuseIrradiance;
     #endif
 
     #ifdef WATER_REFLECTED_CAUSTICS
@@ -46,10 +48,10 @@ void main ()
         
         if (dot(ray.direction, mat.geoNormal) > -0.0001) {
             RayHitInfo rt = TraceGenericRay(ray, 1024.0, true, false);
-            vec3 hitPos = ray.origin + ray.direction * rt.dist + rt.normal * 0.005;
+            vec3 hitPos = ray.origin + ray.direction * rt.dist + rt.normal * 0.001;
 
             if (rt.blockId == 10100) {
-                diffuseIrradiance += lightBrightness * schlickFresnel(vec3(WATER_REFLECTANCE), shadowDir.y) * TraceShadowRay(Ray(hitPos, shadowDir), SHADOW_MAX_RT_DISTANCE, true) * calcWaterCaustics(hitPos, ray.direction, rt.dist) * lightTransmittance(shadowDir) * evalCookBRDF(
+                diffuseIrradiance += shadowLightBrightness * schlickFresnel(vec3(WATER_REFLECTANCE), shadowDir.y) * TraceShadowRay(Ray(hitPos, shadowDir), SHADOW_MAX_RT_DISTANCE, true) * calcWaterCaustics(hitPos, ray.direction, rt.dist) * lightTransmittance(shadowDir) * evalCookBRDF(
                     normalize(ray.direction + mat.geoNormal * 0.03125), 
                     normalize(currPos), 
                     mat.roughness, 
@@ -61,7 +63,7 @@ void main ()
         }
     #endif
 
-    if (mat.roughness <= REFLECTION_ROUGHNESS_THRESHOLD) diffuseIrradiance *= 1.0 - schlickFresnel(mat.F0, dot(mat.textureNormal, normalize(screenToPlayerPos(vec3(gl_FragCoord.xy * texelSize, 0.0)).xyz - currPos)));
+    if (mat.roughness <= REFLECTION_ROUGHNESS_THRESHOLD) diffuseIrradiance *= 1.0 - schlickFresnel(mat.F0, dot(mat.textureNormal, normalize(screenToPlayerPos(vec3(uv, 0.0)).xyz - currPos)));
 
     color.rgb = EXPONENT_BIAS * mat.albedo.rgb * diffuseIrradiance;
 }

@@ -1,10 +1,11 @@
 #ifndef INCLUDE_PBR
     #define INCLUDE_PBR
 
-    void applySpecularMap (vec4 specularData, inout vec3 albedo, out vec3 f0, out float roughness, out float emission) 
+    void applySpecularMap (vec4 specularData, inout vec3 albedo, out vec3 f0, out float roughness, out float emission, out float sssAmount) 
     {
         roughness = pow(1.0 - specularData.r, 2.0);
         emission = EMISSION_BRIGHTNESS * (specularData.a < 254.5 / 255.0 ? specularData.a * 255.0 / 254.0 : 0.0);
+        sssAmount = specularData.b > (64.5 / 255.0) ? (specularData.a - 64.0 / 255.0) : 0.0;
 
         int reflectanceValue = int(specularData.g * 255.0 + 0.5);
         float metallic;
