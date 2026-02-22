@@ -53,7 +53,12 @@ void main ()
 
     if (saturate(prevUv.xyz) == prevUv.xyz && prevPos.w > 0.0) 
     {
-        vec4 prevData = texture(colortex6, prevUv.xy);
+        #if TAA_HISTORY_SAMPLING == 0
+            vec4 prevData = texCatmullRom(colortex6, prevUv.xy, screenSize);
+        #else
+            vec4 prevData = texture(colortex6, prevUv.xy);
+        #endif
+
         vec3 colorMin = vec3(INFINITY);
         vec3 colorMax = vec3(-INFINITY);
 
@@ -73,25 +78,23 @@ void main ()
                 bool isUnderSample = false;
             #endif
 
-            float blendWeight = mix(1.0, rcp(max(prevData.a, 1.0)),
+            float alpha = mix(1.0, rcp(max(prevData.w, 1.0)),
                 exp(-(
                       16.0 * TAA_VARIANCE_WEIGHT * length(clamp(prevData.rgb, colorMin, colorMax) - prevData.rgb)
                     + TAA_OFFCENTER_WEIGHT * (1.0 - (1.0 - 2.0 * abs(fract(prevUv.x * screenSize.x) - 0.5)) * (1.0 - 2.0 * abs(fract(prevUv.y * screenSize.y) - 0.5)))
                 ))
             );
 
-            #if TAA_UPSCALING_FACTOR < 100
-                if (isUnderSample && prevData.a > 1.0) blendWeight *= 0.0005;
-            #endif
-
             // Log weighting from https://www.elopezr.com/temporal-aa-and-the-quest-for-the-holy-trail/
-            currData.rgb = exp(mix(
-                log(clamp(prevData.rgb, colorMin, colorMax) + 0.0001), 
-                log(currData.rgb + 0.0001), 
-                blendWeight)
+            currData.rgb = exp(
+                mix(
+                    log(clamp(prevData.rgb, colorMin, colorMax) + 0.0001), 
+                    log(currData.rgb + 0.0001), 
+                    isUnderSample && prevData.w > 1.0 ? alpha * 0.0005 : alpha
+                )
             ) - 0.0001;
 
-            history = vec4(currData.rgb, min(prevData.a + (isUnderSample ? 0.0005 : 1.0), rcp(TAA_BLEND_WEIGHT)));
+            history = vec4(currData.rgb, min(rcp(alpha) + (isUnderSample ? 0.0005 : 1.0), rcp(TAA_BLEND_WEIGHT)));
         } else history = vec4(currData.rgb, rcp(TAA_BLEND_WEIGHT));
     } else history = vec4(currData.rgb, 1.0);
 }

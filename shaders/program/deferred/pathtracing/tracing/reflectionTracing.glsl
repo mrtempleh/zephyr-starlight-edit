@@ -114,6 +114,7 @@ void main ()
 
         for (int j = 0; j < REFLECTION_BOUNCES; j++) {
             RayHitInfo rt = TraceGenericRay(specularRay, REFLECTION_MAX_RT_DISTANCE, true, true);
+
             if (luminance(throughput) > 0.5 && roughnessAccum < 0.2) rayDist += rt.dist;
 
             if (rt.hit) {
@@ -122,10 +123,17 @@ void main ()
                 radiance += throughput * rt.albedo.rgb * rt.emission;
 
                 vec3 hitPos = specularRay.origin + rt.dist * specularRay.direction;
+
                 #ifdef REFLECTION_SS_REUSE
                     IrradianceSum r = sampleReflectionLighting(hitPos, rt.normal, vec2(randomValue(state), randomValue(state)), 0.3);
                 #else
-                    IrradianceSum r = irradianceCacheSmooth(hitPos, rt.normal, 0u, vec2(randomValue(state), randomValue(state)));
+                    vec2 rand = vec2(randomValue(state), randomValue(state));
+
+                    IrradianceSum r = irradianceCacheSmooth(hitPos, rt.normal, 0u, rand);
+
+                    #ifdef REFLECTION_PER_PIXEL_SHADOWS
+                        if (dot(rt.normal, shadowDir) > -0.0001) r.directIrradiance = TraceShadowRay(Ray(specularRay.origin + rt.dist * specularRay.direction, sampleSunDir(shadowDir, rand)), SHADOW_MAX_RT_DISTANCE, true).rgb;
+                    #endif
                 #endif
 
                 radiance += throughput * r.diffuseIrradiance * rt.albedo.rgb;
@@ -144,7 +152,7 @@ void main ()
                     specularRay.direction = sampleVNDF(specularRay.direction, rt.normal, rt.roughness, vec2(randomValue(state), randomValue(state)));
                 }
             } else {
-                #ifndef DIMENSION_END
+                #ifdef DIMENSION_OVERWORLD
                     radiance += throughput * rt.albedo.rgb * sampleSkyView(specularRay.direction);
                 #endif
                 break;

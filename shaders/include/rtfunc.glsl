@@ -5,6 +5,11 @@ ray.direction = vec3(ray.direction.x < 0.0 ? -1.0 : 1.0, ray.direction.y < 0.0 ?
 
 vec3 delta = abs(1.0 / ray.direction);
 vec3 rayStep = sign(ray.direction);
+
+float rayOffset = max0(0.002 + rayBox(ray.origin - rayStep, delta * rayStep, -vec3(halfVoxelVolumeSize), vec3(halfVoxelVolumeSize)));
+
+ray.origin += ray.direction * rayOffset;
+
 ivec3 voxel = halfVoxelVolumeSize + ivec3(floor(ray.origin));
 vec3 sideDist = delta * abs(ray.origin - floor(ray.origin + max(vec3(0), rayStep)));
 vec3 tint = vec3(1.0);
@@ -110,6 +115,8 @@ for (uint i = 0u; i < 256u && all(greaterThan(voxel, ivec3(0))) && all(lessThan(
     sideDist += delta * abs(voxel - nextPos);
     voxel = nextPos;
 }
+
+if (hitResult.hit) hitResult.dist += rayOffset;
 
 #ifdef RT_SHADOW
     return tint;

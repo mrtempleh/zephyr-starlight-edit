@@ -38,7 +38,6 @@ float worley (vec3 uv, int octave)
     return exp(-2.4 * minDist);
 }
 
-
 void main ()
 {
     vec3 uv = vec3(gl_GlobalInvocationID.xyz) * rcp(64.0) + rcp(128.0);

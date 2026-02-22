@@ -73,7 +73,7 @@
                     float sampleWeight = exp(-temporalWeight * (
                           DENOISER_DEPTH_WEIGHT * abs(dot(mat.geoNormal, currPos.xyz - screenToPlayerPos(vec3((sampleTexel + 0.5) * internalTexelSize, texelFetch(depthtex1, sampleTexel, 0).x)).xyz))
                         + DENOISER_NORMAL_WEIGHT * (-dot(sampleNormal, mat.textureNormal) * 0.5 + 0.5)
-                        + 3.0 * abs(mat.roughness - sampleRoughness)
+                        + 5.0 * abs(mat.roughness - sampleRoughness)
                         )
                     );
 

@@ -1,7 +1,7 @@
-profile.FANCY = §cFancy
+profile.FANCY = §9Fancy
 profile.FAST  = §cFast
 
-option.MAIN_TITLE = Zephyr Starlight
+option.MAIN_TITLE = Zephyr Starlight by §9Kirilpro6284
 
 value.MAIN_TITLE.0 = §dv0.2.2
 value.MAIN_TITLE.1 = §cv0.2.2
@@ -25,7 +25,10 @@ screen.PT_IRCACHE      = Irradiance Cache
 screen.PT_DIFFUSE    = Diffuse Lighting
 screen.PT_REFLECTION = Reflections
 screen.PT_SHADOW     = Shadows
-screen.PT_DENOISING  = Denoising
+screen.PT_DENOISING  = Denoiser
+
+screen.PT_SPATIAL_FILTER  = Spatial Filter
+screen.PT_TEMPORAL_FILTER = Temporal Filter
 
 option.SMOOTH_IRCACHE    = Smooth Irradiance Cache
 option.NOISE_METHOD      = Noise Method
@@ -54,7 +57,7 @@ value.SUNLIGHT_GI_QUALITY.0          = Low
 value.SUNLIGHT_GI_QUALITY.1          = Medium
 value.SUNLIGHT_GI_QUALITY.2          = High
 
-option.DIFFUSE_FILTER_QUALITY        = Denoising Quality
+option.DIFFUSE_FILTER_QUALITY        = Denoiser Quality
 
 value.DIFFUSE_FILTER_QUALITY.0       = Low
 value.DIFFUSE_FILTER_QUALITY.1       = High
@@ -77,9 +80,9 @@ option.DIFFUSE_HALF_RES    = Half Res Trace
 option.REFLECTION_HALF_RES = Half Res Trace
 option.SHADOW_HALF_RES     = Half Res Trace
 
-option.DENOISER_DEPTH_WEIGHT  = Denoiser Depth Weight
-option.DENOISER_NORMAL_WEIGHT = Denoiser Normal Weight
-option.DENOISER_SHARPENING    = Denoiser Sharpness
+option.DENOISER_DEPTH_WEIGHT     = Denoiser Depth Weight
+option.DENOISER_NORMAL_WEIGHT    = Denoiser Normal Weight
+option.DENOISER_INTENSITY_WEIGHT = Denoiser Intensity Weight
 
 option.TEMPORAL_PREFILTERING      = Temporal Prefiltering
 option.TEMPORAL_NORMAL_TOLERANCE  = Temporal Normal Tolerance
@@ -88,10 +91,10 @@ option.DENOISER_VARIANCE_GUIDE    = Variance Guide
 
 option.IRCACHE_VOXEL_ARRAY_SIZE = Voxel Array Size
 option.IRCACHE_PROBE_ATTEMPTS   = Probe Attempts
-option.IRCACHE_UPDATE_INTERVAL  = Update Interval
-option.IRCACHE_MAX_RT_DISTANCE  = Trace Distance
 option.IRCACHE_CASCADE_RES      = Cascade Resolution
+option.IRCACHE_MAX_RT_DISTANCE  = Trace Distance
 option.IRCACHE_SAMPLES          = Samples
+option.IRCACHE_BLEND_WEIGHT     = Blend Weight
 
 suffix.IRCACHE_CASCADE_RES      = ³
 
@@ -125,6 +128,31 @@ option.SKY_RAYLEIGH_G   = Rayleigh Amount (G)
 option.SKY_RAYLEIGH_B   = Rayleigh Amount (B)
 option.NIGHT_BRIGHTNESS = Night Brightness
 option.SKY_MULTISCATTER = Multiple Scattering
+
+screen.VOLUMETRIC_LIGHT = Volumetric Light
+
+option.VL_ENABLED       = Enabled
+option.VL_STEP_COUNT    = Step Count
+option.VL_INTENSITY     = Intensity
+option.VL_INTENSITY_DAY = Intensity (Day)
+option.VL_DENSITY       = Fog Density
+option.VL_DISTANCE      = Max Distance
+
+screen.SUBSURFACE_SCATTERING = Subsurface Scattering
+
+option.SSS_ENABLED       = Enabled
+option.SSS_STEP_COUNT    = Step Count
+option.SSS_INTENSITY     = Intensity
+option.SSS_ABSORPTION    = Apsorption
+option.SSS_RADIUS        = Kernel Radius
+option.SSS_PHASE         = Phase Function
+
+option.VL_ENABLED       = Enabled
+option.VL_STEP_COUNT    = Step Count
+option.VL_INTENSITY     = Intensity
+option.VL_INTENSITY_DAY = Intensity (Day)
+option.VL_DENSITY       = Fog Density
+option.VL_DISTANCE      = Distance
 
 option.NORMAL_MAPPING         = Normal Mapping
 option.SPECULAR_MAPPING       = Specular Mapping
@@ -171,7 +199,7 @@ option.WATER_REFLECTED_CAUSTICS = Reflected Caustics
 option.WATER_CAUSTICS_STRENGTH  = Caustic Strength
 
 option.TAA                     = TAA
-option.TAA_UPSCALING_FACTOR    = Temporal Upscaling
+option.TAA_UPSCALING_FACTOR    = Temporal Upsampling
 
 value.TAA_UPSCALING_FACTOR.25  = 25% (Not recommended)
 value.TAA_UPSCALING_FACTOR.33  = 33% (Not recommended)
@@ -187,6 +215,10 @@ option.TAA_MIP_SCALE          = Mip Scaling
 option.SHARPENING             = Sharpening Amount
 
 option.TAA_REFLECTION_DEPTH   = Reflection Reprojection
+option.TAA_HISTORY_SAMPLING   = History Sampling
+
+value.TAA_HISTORY_SAMPLING.0  = Catmull-Rom
+value.TAA_HISTORY_SAMPLING.1  = Bilinear
 
 option.DYNAMIC_EXPOSURE             = Dynamic Exposure
 option.ADAPTATION_SPEED             = Adaptation Speed

@@ -46,7 +46,7 @@
         uint normalData = texelFetch(colortex9, dstTexel, 0).r;
 
         vec4 currData = texelFetch(colortex2, srcTexel, 0);
-        float currLogLum = log2(currData.r + currData.g + currData.b);
+        float currLogLum = log2(luminance(currData.rgb));
         vec3 currNormal = octDecode(unpackExp4x8(normalData).zw);
         vec4 currPos = screenToPlayerPos(vec3((dstTexel + 0.5) * internalTexelSize, depth));
 
@@ -61,13 +61,12 @@
         #endif
 
         vec2 sampleDir = kernel[FILTER_PASS ^ (frameCounter & 1)];
-        float kernelSize = 0.002 * length(sampleDir);
-
-        float varianceWeight = exp(-currData.w) * (sqrt(DIFFUSE_SAMPLES) * 64.0);
+        
+        float intensityWeight = DENOISER_INTENSITY_WEIGHT * 0.002 * length(sampleDir);
+        float varianceWeight = exp(-currData.w) * (sqrt(DIFFUSE_SAMPLES) * 128.0);
 
         vec4 samples = vec4(0.0);
         float weights = 0.0;
-        float maxTapWeight = 0.0;
 
         #if FILTER_PASS < 4 
             vec2 samplePos = gl_FragCoord.xy - sampleDir;
@@ -100,24 +99,19 @@
                     vec3 sampleNormal = octDecode(unpack2x8(texelFetch(colortex9, sampleCoord, 0).x & 65535u));
                     vec3 posDiff = currPos.xyz - screenToPlayerPos(vec3((sampleCoord + 0.5) * internalTexelSize, texelFetch(depthtex1, sampleCoord, 0).x)).xyz;
 
-                    float sampleVariance = exp(-sampleData.w) * (sqrt(DIFFUSE_SAMPLES) * 32.0);
-
-                    float sampleWeight = exp(-max(sampleVariance, varianceWeight) * (
+                    float sampleWeight = exp(-varianceWeight * (
                           DENOISER_NORMAL_WEIGHT * (-dot(sampleNormal, currNormal) * 0.5 + 0.5)
                         + DENOISER_DEPTH_WEIGHT * abs(dot(geoNormal, posDiff))
-                        + DENOISER_SHARPENING * kernelSize * min(abs(log2(sampleData.r + sampleData.g + sampleData.b) - currLogLum), 3.0)
+                        + intensityWeight * min(abs(log2(luminance(sampleData.rgb)) - currLogLum), 3.0)
                         )
                     );
 
                     weights += sampleWeight;
-                    maxTapWeight = max(maxTapWeight, sampleWeight);
-
-                    samples.rgb += sampleWeight * sampleData.rgb;
-                    samples.a = max(samples.a, sampleWeight * sampleData.a);
+                    samples += sampleWeight * sampleData;
                 }
             }
         }
 
-        if (weights > 0.001) filteredData = vec4(samples.rgb / weights, samples.a / maxTapWeight);
+        if (weights > exp2(-16.0)) filteredData = vec4(samples / weights);
         else filteredData = currData;
     }

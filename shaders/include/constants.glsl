@@ -2,7 +2,7 @@
     #define INCLUDE_CONSTANTS
     
     const int noiseTextureResolution = 128;
-    const int shadowMapResolution = 2048; // [256 512 1024 2048 4096]
+    const int shadowMapResolution = 1024; // [256 512 1024 2048 4096]
 
     const float shadowDistanceRenderMul = 1.0;
     const float entityShadowDistanceMul = 0.5; // [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
@@ -11,6 +11,7 @@
     const float sunPathRotation = -50.0; // [-60.0 -55.0 -50.0 -45.0 -40.0 -35.0 -30.0 -25.0 -20.0 -15.0 -10.0 -5.0 0.0 5.0 10.0 15.0 20.0 25.0 30.0 35.0 40.0 45.0 50.0 55.0 60.0]
     const float shadowDistance = VOXELIZATION_DISTANCE;
 
+    const float eyeBrightnessHalflife = 4.0;
     const float centerDepthHalflife = 2.0;
 
     const float lineWidth = 1.0;
@@ -23,7 +24,7 @@
     const ivec3 halfVoxelVolumeSize = voxelVolumeSize >> 1;
 
     #define END_MARKER 0x00ffffffu
-    #define IRCACHE_INV_MARKER uvec2(3154164736u)
+    #define IRCACHE_INV_MARKER packHalf4x16(vec4(0.0, 0.0, 0.0, 1.0))
 
     #define TAAU_RENDER_SCALE (0.01 * TAA_UPSCALING_FACTOR)
 

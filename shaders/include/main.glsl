@@ -139,6 +139,7 @@
     } renderState;
 
     layout (r8ui) uniform uimage3D voxelBufferLod;
+    layout (r16) uniform image2D imgShadowTex;
 
     #ifdef STAGE_SETUP    
         layout (rgb10_a2) uniform image2D imgTransmittance;
@@ -214,7 +215,7 @@
     {
         uvec3 data = uvec3(texelFetch(colortex8, texel, 0).rg, texelFetch(colortex9, texel, 0).r);
 
-        bool hasSSS = (data.y & 64u) == 64u;
+        bool hasSSS = (data.y & 0x00000080u) == 0x00000080u;
 
         vec4 albedo = unpackUnorm4x8(data.x);
         vec4 specularData = hasSSS ? unpackUnorm4x8(data.y).gbar : unpackUnorm4x8(data.y).gbra;
@@ -240,8 +241,8 @@
         if (hasSSS) result.emission = 0.0;
         else result.sssAmount = 0.0;
 
-        result.blockId = (data.x >> 24u) | ((data.y & 127u) << 8u);
-        result.isHand = (data.y & 0x00000080u) == 0x00000080u;
+        result.blockId = (data.x >> 24u) | ((data.y & 63u) << 8u);
+        result.isHand = (data.y & 0x00000040u) == 0x00000040u;
 
         return result;
     }
@@ -250,10 +251,10 @@
     {
         uvec4 pack;
 
-        bool hasSSS = specularData.b > (64.5 / 255.0) && (specularData.a < (1.0 / 255.0) || specularData.a > 254.0 / 255.0);
+        bool hasSSS = specularData.b > (64.5 / 255.0);
 
-        pack.x = packUnorm4x8(vec4(albedo, 0.0)) | ((blockId & 255u) << 24u);
-        pack.y = packUnorm4x8(vec4(0.0, hasSSS ? specularData.rgb : specularData.rga)) | ((blockId >> 8u) & 63u) | (uint(isHand) << 7u) | (uint(hasSSS) << 6u);
+        pack.x = packUnorm4x8(vec4(albedo, 0.0)) | (blockId << 24u);
+        pack.y = packUnorm4x8(vec4(0.0, hasSSS ? specularData.rgb : specularData.rga)) | ((blockId >> 8u) & 63u) | (uint(hasSSS) << 7u) | (uint(isHand) << 6u);
 
         #ifdef NORMAL_MAPPING
             pack.z = packExp4x8(vec4(octEncode(geoNormal), octEncode(textureNormal)));

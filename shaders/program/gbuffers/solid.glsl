@@ -43,12 +43,7 @@ void main ()
 
     vec2 texSize = vec2(textureSize(gtexture, 0));
     vec2 atlasTexCoord = texSize * vsout.texcoord;
-
-    #if defined POM && defined STAGE_TERRAIN
-        float mipLevel = floor(0.5 + max(0.0, TAA_MIP_SCALE * 0.5 * log2(max(lengthSquared(dFdx(atlasTexCoord)), lengthSquared(dFdy(atlasTexCoord))))));
-    #else
-        float mipLevel = max(0.0, TAA_MIP_SCALE * 0.5 * log2(max(lengthSquared(dFdx(atlasTexCoord)), lengthSquared(dFdy(atlasTexCoord)))));
-    #endif
+    float mipLevel = max(0.0, TAA_MIP_SCALE * 0.5 * log2(max(lengthSquared(dFdx(atlasTexCoord)), lengthSquared(dFdy(atlasTexCoord)))));
 
     vec3 geoNormal = octDecode(unpack2x16(vsout.vertexNormal));
 
@@ -56,20 +51,24 @@ void main ()
 
     #if defined POM || defined NORMAL_MAPPING
         mat3 tbnMatrix = tbnNormalTangent(geoNormal, vsout.vertexTangent);
-    #endif
 
-    #if defined POM && defined STAGE_TERRAIN
         vec2 uv = internalTexelSize * gl_FragCoord.xy;
+        vec3 playerPos = screenToPlayerPos(vec3(uv, gl_FragCoord.z)).xyz;
+        vec3 viewDir = playerPos - screenToPlayerPos(vec3(uv, 0.0)).xyz;
+    #endif
+    
+    #if defined POM && defined STAGE_TERRAIN
+        vec3 rayDir = viewDir * tbnMatrix;
 
-        vec3 rayDir = (screenToPlayerPos(vec3(uv, gl_FragCoord.z)).xyz - screenToPlayerPos(vec3(uv, 0.0)).xyz) * tbnMatrix;
+        float lod = 0.0;
 
-        float mipScale    = exp2(-mipLevel);
-        float invMipScale = exp2(mipLevel);
+        float mipScale    = exp2(-lod);
+        float invMipScale = exp2(lod);
 
-        POMHitResult hr = tracePOM(vec3(atlasTexCoord * mipScale, 0.0), rayDir, ivec4(vsout.texBounds * mipScale + 0.5), int(mipLevel), mipScale);
+        POMHitResult hr = tracePOM(vec3(atlasTexCoord * mipScale, 0.0), rayDir, ivec4(vsout.texBounds * mipScale + 0.5), int(lod), mipScale);
         vec2 hitUv = wrap(hr.hitPos.xy * invMipScale, vsout.texBounds) / texSize;
 
-        vec4 albedo = textureLod(gtexture, hitUv, mipLevel) * vec4(vsout.vertexColor, 1.0);
+        vec4 albedo = textureLod(gtexture, hitUv, lod) * vec4(vsout.vertexColor, 1.0);
 
         #ifdef SPECULAR_MAPPING
             vec4 specularData = textureLod(specular, hitUv, 0.0);
@@ -102,7 +101,8 @@ void main ()
             textureNormal.xy *= step(vec2(rcp(128.0)), abs(textureNormal.xy));
             textureNormal.z = sqrt(max(0.0, 1.0 - lengthSquared(textureNormal.xy)));
         #endif
-        textureNormal = tbnMatrix * textureNormal;
+
+        textureNormal = tbnMatrix * normalize(vec3(textureNormal.xy, max(textureNormal.z, rcp(TAA_MIP_SCALE) * mipLevel)));
     #else
         vec3 textureNormal = geoNormal;
     #endif

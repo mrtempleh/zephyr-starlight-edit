@@ -100,7 +100,7 @@ void main ()
                 diffuseRay.direction = normalize(mat.textureNormal + dir);
             #endif
 
-            float pdf = 2.0 / PI;
+            float pdf = rcp(HALF_PI);
 
             if (dot(diffuseRay.direction, mat.geoNormal) <= 0.0) continue;
         #else
@@ -139,11 +139,11 @@ void main ()
             vec3 hitPos = diffuseRay.origin + diffuseRay.direction * (rt.dist - 0.002);
         #endif    
 
-        if (rt.dist != DIFFUSE_MAX_RT_DISTANCE) {       
+        if (rt.hit) 
+        {       
 			float distGradient = exp2(-floor(clamp(log2(length(hitPos)) - log2(IRCACHE_CASCADE_RES / 8.0), -1.0, 0.0))) * rt.dist * dot(mat.geoNormal, diffuseRay.direction);
 
             IrradianceSum query = irradianceCache(hitPos, rt.normal, 0u);
-
             radiance += pdf * (rt.albedo.rgb * rt.emission + smoothstep(0.0, 0.5, distGradient) * max(MINIMUM_LIGHT * vec3(0.4, 0.5, 1.0), query.diffuseIrradiance * rt.albedo.rgb));
 
             vec3 dir = sampleSunDir(shadowDir, vec2(randomValue(state), randomValue(state)));
@@ -166,7 +166,7 @@ void main ()
                 radiance += sunlight;
             }
         } 
-        #ifndef DIMENSION_END
+        #ifdef DIMENSION_OVERWORLD
             else {
                 radiance += rt.albedo.rgb * pdf * sampleSkyView(diffuseRay.direction);
             }

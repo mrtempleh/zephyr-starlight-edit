@@ -6,10 +6,19 @@ Changes over v0.2.1:
 * Tweaked water caustics to be more visible at sunrise/sunset
 * Added refracted glass caustics in diffuse lighting
 * Small tweaks to shadow denoising
-* Fixed issues with water waves at high coordinates
 * Implemented atmosphere multiple scattering to make the sky bluer and less dingy
-* Fixed sky noise visible near the horizon
+* New shader effects: 
+  * Subsurface scattering
+  * Volumetric lighting
 * Diffuse and reflection denoiser improvements
+* Implemented Catmull-Rom TAA history sampling for less blur
+* Reduced flickering and shimmering with POM and detailed normal maps on distant objects
+* Fixed issues with water waves at high coordinates
+* Fixed sky noise visible near the horizon
+* Fixed POM not working with low Mipmap Levels
+* Fixed the sky looking too dark in refractions
+* Fixed reflection per pixel shadow calculation not working if Screen Space Reuse is disabled
+* Fixed the sun being too bright when under the horizon
 * Fixed a precision issue that caused light leaking in some situations
 
 # v0.2.1 hotfix1

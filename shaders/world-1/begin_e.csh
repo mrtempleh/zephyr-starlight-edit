@@ -2,4 +2,4 @@
 
 #define STAGE_BEGIN
 
-#include "/program/compute/water/waterWaveNormal.glsl"
+#include "/program/compute/lut/skyView.glsl"

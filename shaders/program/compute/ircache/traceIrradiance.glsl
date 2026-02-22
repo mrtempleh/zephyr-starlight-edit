@@ -15,84 +15,26 @@
 
 layout (local_size_x = 64) in;
 
-#if IRCACHE_UPDATE_INTERVAL == 1
-    #if IRCACHE_VOXEL_ARRAY_SIZE == 32768
-        const ivec3 workGroups = ivec3(512, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 49152
-        const ivec3 workGroups = ivec3(768, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 65536
-        const ivec3 workGroups = ivec3(1024, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 98304
-        const ivec3 workGroups = ivec3(1536, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 131072
-        const ivec3 workGroups = ivec3(2048, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 262144
-        const ivec3 workGroups = ivec3(4096, 1, 1);
-    #endif
-#elif IRCACHE_UPDATE_INTERVAL == 2
-    #if IRCACHE_VOXEL_ARRAY_SIZE == 32768
-        const ivec3 workGroups = ivec3(256, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 49152
-        const ivec3 workGroups = ivec3(384, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 65536
-        const ivec3 workGroups = ivec3(512, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 98304
-        const ivec3 workGroups = ivec3(768, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 131072
-        const ivec3 workGroups = ivec3(1024, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 262144
-        const ivec3 workGroups = ivec3(2048, 1, 1);
-    #endif
-#elif IRCACHE_UPDATE_INTERVAL == 4
-    #if IRCACHE_VOXEL_ARRAY_SIZE == 32768
-        const ivec3 workGroups = ivec3(128, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 49152
-        const ivec3 workGroups = ivec3(192, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 65536
-        const ivec3 workGroups = ivec3(256, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 98304
-        const ivec3 workGroups = ivec3(384, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 131072
-        const ivec3 workGroups = ivec3(512, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 262144
-        const ivec3 workGroups = ivec3(1024, 1, 1);
-    #endif
-#elif IRCACHE_UPDATE_INTERVAL == 8
-    #if IRCACHE_VOXEL_ARRAY_SIZE == 32768
-        const ivec3 workGroups = ivec3(64, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 49152
-        const ivec3 workGroups = ivec3(96, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 65536
-        const ivec3 workGroups = ivec3(128, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 98304
-        const ivec3 workGroups = ivec3(192, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 131072
-        const ivec3 workGroups = ivec3(256, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 262144
-        const ivec3 workGroups = ivec3(512, 1, 1);
-    #endif
-#elif IRCACHE_UPDATE_INTERVAL == 16
-    #if IRCACHE_VOXEL_ARRAY_SIZE == 32768
-        const ivec3 workGroups = ivec3(32, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 49152
-        const ivec3 workGroups = ivec3(48, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 65536
-        const ivec3 workGroups = ivec3(64, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 98304
-        const ivec3 workGroups = ivec3(96, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 131072
-        const ivec3 workGroups = ivec3(128, 1, 1);
-    #elif IRCACHE_VOXEL_ARRAY_SIZE == 262144
-        const ivec3 workGroups = ivec3(256, 1, 1);
-    #endif
+#if IRCACHE_VOXEL_ARRAY_SIZE == 32768
+    const ivec3 workGroups = ivec3(512, 1, 1);
+#elif IRCACHE_VOXEL_ARRAY_SIZE == 49152
+    const ivec3 workGroups = ivec3(768, 1, 1);
+#elif IRCACHE_VOXEL_ARRAY_SIZE == 65536
+    const ivec3 workGroups = ivec3(1024, 1, 1);
+#elif IRCACHE_VOXEL_ARRAY_SIZE == 98304
+    const ivec3 workGroups = ivec3(1536, 1, 1);
+#elif IRCACHE_VOXEL_ARRAY_SIZE == 131072
+    const ivec3 workGroups = ivec3(2048, 1, 1);
+#elif IRCACHE_VOXEL_ARRAY_SIZE == 262144
+    const ivec3 workGroups = ivec3(4096, 1, 1);
 #endif
 
 void main ()
 {   
-    uint index = gl_GlobalInvocationID.x + (frameCounter % IRCACHE_UPDATE_INTERVAL) * (IRCACHE_VOXEL_ARRAY_SIZE / IRCACHE_UPDATE_INTERVAL);
+    uint index = gl_GlobalInvocationID.x;
 
     IrcacheVoxel voxel = ircache.entries[index];
-    uint state = gl_GlobalInvocationID.x + (frameCounter & 2047u) * IRCACHE_VOXEL_ARRAY_SIZE / IRCACHE_UPDATE_INTERVAL;
+    uint state = gl_GlobalInvocationID.x + (frameCounter & 2047u) * IRCACHE_VOXEL_ARRAY_SIZE;
 
     if (voxel.packedPos == 0u || voxel.traceOrigin == 0u || frameCounter - voxel.lastFrame > 10u || voxel.lastFrame > frameCounter) {
         ircache.entries[index].traceOrigin = 0u;
@@ -113,44 +55,48 @@ void main ()
     
     ray.origin = playerPos;
 
-    vec4 radiance = vec4(0.0);
+    vec4 currRadiance = vec4(0.0);
 
     for (int i = 0; i < IRCACHE_SAMPLES; i++) {
         ray.direction = randomHemisphereDir(normal, state);
 
         RayHitInfo rt = TraceGenericRay(ray, IRCACHE_MAX_RT_DISTANCE, true, true);
-        float cosTheta = dot(normal, ray.direction);
+        float mu = dot(normal, ray.direction);
 
         if (rt.hit) {
             IrradianceSum query = irradianceCache(ray.origin + ray.direction * (rt.dist - 0.002), rt.normal, voxel.rank);
-            radiance.rgb += cosTheta * (rt.albedo.rgb * (rt.emission + query.diffuseIrradiance) + lightTransmittance(shadowDir) * shadowLightBrightness * query.directIrradiance * evalCookBRDF(shadowDir, ray.direction, max(0.2, rt.roughness), rt.normal, rt.albedo.rgb, rt.F0));
+            currRadiance.rgb += mu * (rt.albedo.rgb * (rt.emission + query.diffuseIrradiance) + lightTransmittance(shadowDir) * shadowLightBrightness * query.directIrradiance * evalCookBRDF(shadowDir, ray.direction, max(0.2, rt.roughness), rt.normal, rt.albedo.rgb, rt.F0));
         } 
-        #ifndef DIMENSION_END
+        #ifdef DIMENSION_OVERWORLD
             else {
-                radiance.rgb += cosTheta * rt.albedo.rgb * sampleSkyView(ray.direction);
+                currRadiance.rgb += mu * rt.albedo.rgb * sampleSkyView(ray.direction);
             }
         #endif
     }
     
-    radiance.rgb *= rcp(IRCACHE_SAMPLES);
+    currRadiance.rgb *= rcp(IRCACHE_SAMPLES);
 
-    if (any(isnan(radiance))) radiance = vec4(0.0);
+    vec4 prevRadiance = unpackHalf4x16(voxel.radiance);
+    vec3 prevShadow   = unpack3x10(voxel.direct);
 
-    vec3 direct;
+    if (any(isnan(currRadiance))) currRadiance = vec4(0.0);
+    if (any(isnan(prevRadiance))) prevRadiance = vec4(0.0, 0.0, 0.0, 1.0);
 
-    if (dot(normal, shadowDir) > 0.0) direct = TraceShadowRay(Ray(ray.origin, sampleSunDir(shadowDir, vec2(randomValue(state), randomValue(state)))), 1024.0, true).rgb;
-    else direct = voxel.radiance == IRCACHE_INV_MARKER ? vec3(0.0) : unpack3x10(voxel.direct);
+    vec3 currShadow = vec3(0.0);
 
-    vec4 r = unpackHalf4x16(voxel.radiance);
+    if (dot(normal, shadowDir) > 0.0) currShadow = TraceShadowRay(Ray(ray.origin, sampleSunDir(shadowDir, vec2(randomValue(state), randomValue(state)))), 1024.0, true).rgb;
+    else currShadow = vec3(0.0);
 
-    if (r == vec4(-1.0)) {
+    if (prevRadiance.w == 1.0) {
         for (int i = voxelPos.w - 1; i <= voxelPos.w + 2; i += 2) {
             if (i >= 0) {
                 IrradianceSum prevData = irradianceCacheSilent(playerPos, normal, i);
 
                 if (prevData.diffuseIrradiance != vec3(0.0)) {
-                    r.rgb = max(vec3(0.0), prevData.diffuseIrradiance);
-                    direct = max(vec3(0.0), prevData.directIrradiance);
+                    prevRadiance.rgb = max(vec3(0.0), prevData.diffuseIrradiance);
+                    prevRadiance.w = rcp(IRCACHE_BLEND_WEIGHT);
+
+                    prevShadow = currShadow;
 
                     break;
                 }
@@ -158,6 +104,8 @@ void main ()
         }
     }
 
-    ircache.entries[index].direct = pack3x10(mix(unpack3x10(voxel.direct), direct, (r == vec4(-1.0)) ? 1.0 : rcp(max(16.0, 0.25 * frameRate))));
-    ircache.entries[index].radiance = packHalf4x16(any(isnan(r)) ? vec4(0.0) : (r == vec4(-1.0)) ? radiance : mix(r, radiance, rcp(max(128.0, 2.0 * frameRate))));
+    prevRadiance.w = clamp(prevRadiance.w, 1.0, rcp(IRCACHE_BLEND_WEIGHT));
+
+    ircache.entries[index].direct   = pack3x10(mix(prevShadow, currShadow, rcp(min(prevRadiance.w, 16.0))));
+    ircache.entries[index].radiance = packHalf4x16(vec4(mix(prevRadiance.rgb, currRadiance.rgb, rcp(prevRadiance.w)), prevRadiance.w + 1.0));
 }

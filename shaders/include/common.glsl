@@ -11,6 +11,7 @@
     #define INFINITY     exp2(128.0)
     #define luminance(c) dot(c, vec3(0.2126, 0.7152, 0.0722))
     #define torad(x)     (0.01745329 * x)
+    #define hermite(x)   smoothstep(0.0, 1.0, x)
 
     #include "/include/util.glsl"
 

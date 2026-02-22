@@ -85,7 +85,7 @@ void main ()
 
     if (any(isnan(lastFrame))) lastFrame = vec4(0.0, 0.0, 0.0, 1.0);
 
-    float blendWeight = mix(1.0, rcp(max(1.0, lastFrame.w)),
+    float alpha = mix(1.0, rcp(max(1.0, lastFrame.w)),
         exp((prefilterAmount - 1.0) * (1.0 - (1.0 - 2.0 * abs(fract(prevUv.x * internalScreenSize.x) - 0.5)) * (1.0 - 2.0 * abs(fract(prevUv.y * internalScreenSize.y) - 0.5))))
     );
 
@@ -95,12 +95,12 @@ void main ()
         bool isUnderSample = false;
     #endif
 
-    if (isUnderSample && lastFrame.w > 1.0) blendWeight *= 0.0005;
+    if (isUnderSample && lastFrame.w > 1.0) alpha *= 0.0005;
 
     filteredData.rgb = mix(
         mat.roughness < 0.006 ? clamp(lastFrame.rgb, colorMin, colorMax) : lastFrame.rgb, 
         filteredData.rgb, 
-        blendWeight
+        alpha
     );
 
     filteredData.w = min(lastFrame.w + (isUnderSample ? 0.0005 : 1.0), PT_REFLECTION_ACCUMULATION_LIMIT);

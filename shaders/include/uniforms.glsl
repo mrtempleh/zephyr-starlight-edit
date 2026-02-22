@@ -77,10 +77,12 @@
     uniform float eyeAltitude;
     uniform float aspectRatio;
     uniform float frameRate;
+    uniform float frameTime;
 
     uniform ivec3 previousCameraPositionInt;
     uniform ivec3 cameraPositionInt;
 
+    uniform ivec2 eyeBrightnessSmooth;
     uniform ivec2 atlasSize;
 
     uniform int currentRenderedItemId;

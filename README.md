@@ -19,7 +19,7 @@
 
 * Accurate ray-geometry intersection
 * Path traced diffuse, reflections and sun shadows
-* Temporal anti-aliasing and upscaling
+* Temporal anti-aliasing and upsampling
 * Normal & specular mapping support
 * Physically based sky rendering
     * Hillaire multi-scattering approximation

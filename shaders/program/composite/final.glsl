@@ -14,8 +14,14 @@
 #include "/include/atmosphere.glsl"
 #include "/include/spaceConversion.glsl"
 #include "/include/textureSampling.glsl"
- 
+#include "/include/shadowMapping.glsl"
+
 layout (location = 0) out vec4 color;
+
+vec3 tonemap (vec3 color, float exposure) 
+{
+    return pow(1.0 - exp(-exposure * color.rgb), vec3(1.0 / 2.2));
+}
 
 void main ()
 {   
@@ -45,11 +51,13 @@ void main ()
             float exposure = BRIGHTNESS * MANUAL_EXPOSURE;
         #endif
 
-        color.rgb = mix(pow(1.0 - exp(-exposure * color.rgb), vec3(1.0 / 2.2)), pow(1.0 - exp(-exposure * sharpen.rgb / sharpen.w), vec3(1.0 / 2.2)), -SHARPENING) + blueNoise(gl_FragCoord.xy) * rcp(255.0) - rcp(510.0);
+        color.rgb = mix(tonemap(color.rgb, exposure), tonemap(sharpen.rgb, exposure / sharpen.w), -SHARPENING) + blueNoise(gl_FragCoord.xy) * rcp(255.0) - rcp(510.0);
         color.a = 1.0;
     #endif
 
-    //color.rgb = vec3(mat.sssAmount);
+    //vec3 playerPos = screenToPlayerPos(vec3(internalTexelSize * gl_FragCoord.xy, texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).r)).xyz;
+
+    //color.rgb = vec3(textureShadow(playerToShadowViewPos(playerPos).xy));
 
     #ifdef ENABLE_TEXT_RENDERING
         #define FONT_SIZE 2 // [1 2 3 4 5 6 7 8]
@@ -58,8 +66,7 @@ void main ()
         text.fgCol = vec4(vec3(1.0), 1.0);
         text.bgCol = vec4(vec3(0.0), 0.0);
         
-        printVec2(internalScreenSize);
-        printVec2(taaOffset);
+        printVec3(vec3(halfVoxelVolumeSize));
         
         endText(color.rgb);
     #endif

@@ -18,8 +18,8 @@
             uint state = uint(sampleCoord.x) + 65536u * uint(sampleCoord.y);
             float sampleData = randomValue(state);
 
-            result += sampleData * smoothstep(0.0, 1.0, 1.0 - abs(texel.x - floor(texel.x + offset.x))) 
-                                 * smoothstep(0.0, 1.0, 1.0 - abs(texel.y - floor(texel.y + offset.y)));
+            result += sampleData * hermite(1.0 - abs(texel.x - floor(texel.x + offset.x))) 
+                                 * hermite(1.0 - abs(texel.y - floor(texel.y + offset.y)));
         }
 
         return result;

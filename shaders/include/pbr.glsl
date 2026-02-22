@@ -5,7 +5,7 @@
     {
         roughness = pow(1.0 - specularData.r, 2.0);
         emission = EMISSION_BRIGHTNESS * (specularData.a < 254.5 / 255.0 ? specularData.a * 255.0 / 254.0 : 0.0);
-        sssAmount = specularData.b > (64.5 / 255.0) ? (specularData.a - 64.0 / 255.0) : 0.0;
+        sssAmount = specularData.b > (64.5 / 255.0) ? (specularData.b - 64.0 / 255.0) : 0.0;
 
         int reflectanceValue = int(specularData.g * 255.0 + 0.5);
         float metallic;
@@ -25,13 +25,10 @@
         float albedoLum = luminance(albedo);
         blockId = blockId % 10000;
 
-        if (blockId == 0) {
-            specularData.r = 0.4 * albedoLum * albedoLum;
-            specularData.g = 0.035 * albedoLum;
-            specularData.a = 0.0;
-            
-            return;
-        }
+        specularData.r = 0.4 * albedoLum * albedoLum;
+        specularData.g = 0.035 * albedoLum;
+        specularData.b = 0.0;
+        specularData.a = 0.0;
 
         if (blockId < 64) {
             if (blockId < 32) {
@@ -331,7 +328,7 @@
                                     if (albedo.r > 0.5) {
                                         specularData.a = 0.35;
                                         albedo.rgb *= vec3(1.0, 0.87, 0.84);
-                                    }
+                                    } else specularData.b = 0.5;
                                 } else {
                                     if (albedo.r > 0.49) {
                                         specularData.a = sqr(albedo.r - 0.49) * 0.75;
@@ -565,6 +562,7 @@
                                 } else {
                                     specularData.r = 0.72 * albedoLum * albedoLum;
                                     specularData.g = 0.07 * albedoLum;
+                                    specularData.b = 0.8;
                                     specularData.a = 0.0;
                                 } 
                             } else {
@@ -574,13 +572,13 @@
                                         albedo.rgb *= albedoLum;
                                     }
                                 } else {
-                                    
+                                    specularData.b = 0.4;
                                 } 
                             } 
                         } else {
                             if (blockId < 94) {
                                 if (blockId < 93) {
-
+                                    specularData.b = 0.8;
                                 } else {
                                     
                                 } 

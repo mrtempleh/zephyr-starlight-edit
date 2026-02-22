@@ -117,9 +117,9 @@
                 if (sampleData.diffuseIrradiance != vec3(0.0)) {
                     vec3 posDiff = scale * abs(origin - offset);
 
-                    float sampleWeight = smoothstep(0.0001, 1.0, abs(1.0 - posDiff.x)) 
-                                       * smoothstep(0.0001, 1.0, abs(1.0 - posDiff.y)) 
-                                       * smoothstep(0.0001, 1.0, abs(1.0 - posDiff.z));
+                    float sampleWeight = smoothstep(-0.0001, 1.0, abs(1.0 - posDiff.x)) 
+                                       * smoothstep(-0.0001, 1.0, abs(1.0 - posDiff.y)) 
+                                       * smoothstep(-0.0001, 1.0, abs(1.0 - posDiff.z));
                                        
                     result.diffuseIrradiance += sampleWeight * sampleData.diffuseIrradiance;
                     result.directIrradiance += sampleWeight * sampleData.directIrradiance;

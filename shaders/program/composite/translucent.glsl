@@ -17,6 +17,8 @@
 #include "/include/sampling.glsl"
 #include "/include/lighting.glsl"
 #include "/include/text.glsl"
+#include "/include/shadowMapping.glsl"
+#include "/include/subsurfaceScattering.glsl"
 
 layout (r11f_g11f_b10f) uniform image2D colorimg7;
 layout (r32f) uniform image2D colorimg13;
@@ -102,7 +104,7 @@ void main ()
     #endif
 
     #if defined GLASS_REFRACTION || defined WATER_REFRACTION
-        vec3 throughput = vec3(0.25);
+        vec3 throughput = vec3(1.0);
         vec3 refractedRadiance = vec3(0.0);
         float refractionDist = 0.0;
 
@@ -122,41 +124,48 @@ void main ()
                 bool medium = true;
 
                 for (int i = 0; i < REFRACTION_BOUNCES; i++) {
-                    RayHitInfo refraction = TraceGenericRay(refractRay, 1024.0, true, i == (REFRACTION_BOUNCES - 1));
+                    RayHitInfo ref = TraceGenericRay(refractRay, 1024.0, true, i == (REFRACTION_BOUNCES - 1));
                     
                     #ifdef WATER_REFRACTION
-                        if (mat.blockId == 10100 && i == 0) waterOpticalDepth += refraction.dist;
+                        if (mat.blockId == 10100 && i == 0) waterOpticalDepth += ref.dist;
                     #endif
 
-                    refractionDist += refraction.dist;
+                    refractionDist += ref.dist;
 
-                    if (refraction.hit) {
-                        vec3 hitPos = refractRay.origin + refractRay.direction * refraction.dist;
-                        vec3 nextDir = refract(refractRay.direction, refraction.normal, refraction.blockId == 10100 ? (medium ? WATER_IOR : rcp(WATER_IOR)) : (medium ? GLASS_IOR : rcp(GLASS_IOR)));
+                    if (ref.hit) {
+                        vec3 hitPos = refractRay.origin + refractRay.direction * ref.dist;
+                        vec3 nextDir = refract(refractRay.direction, ref.normal, ref.blockId == 10100 ? (medium ? WATER_IOR : rcp(WATER_IOR)) : (medium ? GLASS_IOR : rcp(GLASS_IOR)));
 
                         if (
                             #if defined GLASS_REFRACTION && defined WATER_REFRACTION
-                                refraction.blockId == 99 || refraction.blockId == 10100
+                                ref.blockId == 99 || ref.blockId == 10100
                             #elif defined GLASS_REFRACTION
-                                refraction.blockId == 99
+                                ref.blockId == 99
                             #else
-                                refraction.blockId == 10100
+                                ref.blockId == 10100
                             #endif
                         ) {
                             if (nextDir == vec3(0.0)) {
-                                refractRay.origin = hitPos + refraction.normal * 0.005;
-                                refractRay.direction = reflect(refractRay.direction, refraction.normal);
-                                throughput *= 1.45;
+                                refractRay.origin = hitPos + ref.normal * 0.005;
+                                refractRay.direction = reflect(refractRay.direction, ref.normal);
                             } else {
-                                refractRay.origin = hitPos - refraction.normal * 0.005;
+                                refractRay.origin = hitPos - ref.normal * 0.005;
                                 refractRay.direction = nextDir;
-                                throughput *= mix(vec3(1.0), refraction.albedo.rgb, GLASS_OPACITY);
+                                throughput *= mix(vec3(1.0), ref.albedo.rgb, GLASS_OPACITY);
                                 medium = !medium;
                             }
                         } else {
-                            IrradianceSum r = sampleReflectionLighting(hitPos, refraction.normal, blueNoise(vec2(texel)).rg, 0.4995);
+                            vec2 dither = blueNoise(vec2(texel)).rg;
 
-                            refractedRadiance += throughput * (refraction.albedo.rgb * refraction.emission + refraction.albedo.rgb * r.diffuseIrradiance + lightTransmittance(shadowDir) * shadowLightBrightness * r.directIrradiance * evalCookBRDF(normalize(shadowDir + refraction.normal * 0.03125), refractRay.direction, refraction.roughness, refraction.normal, refraction.albedo.rgb, refraction.F0));
+                            IrradianceSum r = sampleReflectionLighting(hitPos, ref.normal, dither, 0.4995);
+
+                            refractedRadiance += throughput * (
+                                (ref.sssAmount > 0.005 ? 0.01 * ref.sssAmount * subsurfaceScattering(hitPos, ref.albedo.rgb, dot(shadowDir, refractRay.direction), dither) : vec3(0.0)) +
+                                ref.albedo.rgb * ref.emission + 
+                                ref.albedo.rgb * r.diffuseIrradiance + 
+                                lightTransmittance(shadowDir) * shadowLightBrightness * r.directIrradiance * evalCookBRDF(normalize(shadowDir + ref.normal * 0.03125), refractRay.direction, ref.roughness, ref.normal, ref.albedo.rgb, ref.F0)
+                            );
+                            break;
                         }
                     } else {
                         refractedRadiance += throughput * sampleSkyView(refractRay.direction);

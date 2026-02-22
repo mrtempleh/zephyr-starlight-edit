@@ -16,10 +16,8 @@
     const vec3 alphaM = betaM * 1.1;
     const vec3 alphaO = SKY_OZONE * vec3(1.9, 2.7, 0.1) * 1e-6;
 
-    #ifdef SCATTER_POINTS
-        const mat2x3 scattering = rcp(SCATTER_POINTS) * mat2x3(betaR, betaM);
-        const mat3   absorption = rcp(SCATTER_POINTS) * mat3(alphaR, alphaM, alphaO);
-    #endif
+    const mat2x3 scattering = mat2x3(betaR, betaM);
+    const mat3   absorption = mat3(alphaR, alphaM, alphaO);
 
     vec2 raySphere (Ray ray, float radius) 
     {
@@ -69,17 +67,17 @@
             return lightTransmittance(vec3(0.0, planetRadius + eyeAltitude + ALTITUDE_BIAS, 0.0), lightDir);
         }
         
+        float phaseRayleigh (float cosTheta)
+        {
+            return (1.0 + cosTheta * cosTheta) * 3.0 / (16.0 * PI);
+        }
+
+        float phaseMie (float cosTheta, float k)
+        {
+            return (1.0 - k * k) / (4.0 * PI * sqr(1.0 - k * cosTheta));
+        }
+
         #ifdef SCATTER_POINTS
-            float phaseRayleigh (float cosTheta)
-            {
-                return (1.0 + cosTheta * cosTheta) * 3.0 / (16.0 * PI);
-            }
-
-            float phaseMie (float cosTheta, float k)
-            {
-                return (1.0 - k * k) / (4.0 * PI * sqr(1.0 - k * cosTheta));
-            }
-
             vec2 multiScatterEncodeUv (vec3 pos, vec3 lightDir, float rayHeight) {
                 vec2 uv = vec2(rcp(atmosphereHeight) * (rayHeight - planetRadius), dot(pos, lightDir) * inversesqrt(dot(pos, pos)) * 0.5 + 0.5);
 
@@ -104,8 +102,8 @@
                 
                 Ray ray = Ray(rayOrigin, viewDir);
 
-                float rayDest = min(raySphere(ray, planetRadius).x, raySphere(ray, planetRadius + atmosphereHeight).y);
-                vec3 rayStep = ray.direction * rayDest * rcp(SCATTER_POINTS);
+                float stepSize = rcp(SCATTER_POINTS) * min(raySphere(ray, planetRadius).x, raySphere(ray, planetRadius + atmosphereHeight).y);
+                vec3 rayStep = ray.direction * stepSize;
                 vec3 rayPos = ray.origin + rayStep * dither;
 
                 vec3 opticalDepth = vec3(0.0);
@@ -124,7 +122,7 @@
 
                     if (i == 0) opticalDepth *= dither;
 
-                    vec3 sunlight = (raySphere(Ray(rayPos, lightDir), planetRadius).x == INFINITY ? lightTransmittance(rayPos, lightDir) : vec3(0.0));
+                    vec3 sunlight = raySphere(Ray(rayPos, lightDir), planetRadius).x == INFINITY ? lightTransmittance(rayPos, lightDir) : vec3(0.0);
                     
                     #ifdef SKY_MULTISCATTER
                         vec3 multiScatter = texture(texMultiScatter, multiScatterEncodeUv(rayPos, lightDir, rayHeight)).rgb;
@@ -132,10 +130,10 @@
                         vec3 multiScatter = vec3(0.0);
                     #endif
 
-                    radiance += exp(-rayDest * (absorption * opticalDepth)) * (sunlight * (scattering * (phase * density.xy)) + multiScatter * (scattering * (phaseIsotropic * density.xy)));
+                    radiance += exp(-stepSize * (absorption * opticalDepth)) * (sunlight * (scattering * (phase * density.xy)) + multiScatter * (scattering * (phaseIsotropic * density.xy)));
                 }
 
-                return mix(rayDest * radiance, vec3(0.03 * smoothstep(-0.05, 0.1, lightDir.y)), rainStrength * 0.7);
+                return mix(stepSize * radiance, vec3(0.03 * smoothstep(-0.05, 0.1, lightDir.y)), rainStrength * 0.7);
             }
         #endif
 
