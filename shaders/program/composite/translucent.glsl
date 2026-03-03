@@ -41,8 +41,6 @@ layout (local_size_x = 8, local_size_y = 8) in;
     const vec2 workGroupsRender = vec2(0.25, 0.25);
 #endif
 
-// TODO : rewrite this mess
-
 void main ()
 {
     ivec2 texel = ivec2(gl_GlobalInvocationID.xy);
@@ -157,13 +155,23 @@ void main ()
                         } else {
                             vec2 dither = blueNoise(vec2(texel)).rg;
 
-                            IrradianceSum r = sampleReflectionLighting(hitPos, ref.normal, dither, 0.4995);
+                            //IrradianceSum r = sampleReflectionLighting(hitPos, ref.normal, dither, 0.4995);
+                            
+                            // data from ircache
+                            IrradianceSum diffuseData;
+                            diffuseData = irradianceCacheSmooth(hitPos, ref.normal, 0u, dither);
+                            
+                            IrradianceSum sunData;
+                            vec3 shadowRayDir = sampleSunDir(shadowDir, dither);
+                            sunData.directIrradiance = TraceShadowRay(Ray(hitPos, shadowRayDir), SHADOW_MAX_RT_DISTANCE, true).rgb;
 
+                            //r to diffuse/sun Data
                             refractedRadiance += throughput * (
                                 (ref.sssAmount > 0.005 ? 0.01 * ref.sssAmount * subsurfaceScattering(hitPos, ref.albedo.rgb, dot(shadowDir, refractRay.direction), dither) : vec3(0.0)) +
                                 ref.albedo.rgb * ref.emission + 
-                                ref.albedo.rgb * r.diffuseIrradiance + 
-                                lightTransmittance(shadowDir) * shadowLightBrightness * r.directIrradiance * evalCookBRDF(normalize(shadowDir + ref.normal * 0.03125), refractRay.direction, ref.roughness, ref.normal, ref.albedo.rgb, ref.F0)
+                                ref.albedo.rgb * diffuseData.diffuseIrradiance + 
+                                                                                        //r - reuse
+                                lightTransmittance(shadowDir) * shadowLightBrightness * sunData.directIrradiance * evalCookBRDF(normalize(shadowDir + ref.normal * 0.03125), refractRay.direction, ref.roughness, ref.normal, ref.albedo.rgb, ref.F0)
                             );
                             break;
                         }
