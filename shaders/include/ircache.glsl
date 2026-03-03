@@ -81,60 +81,73 @@
     #if SMOOTH_IRCACHE == 0
         #define irradianceCacheSmooth(pos, normal, rank, rand) irradianceCache(pos, normal, rank)
     #elif SMOOTH_IRCACHE == 1
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
         IrradianceSum irradianceCacheSmooth (vec3 pos, vec3 normal, uint rank, vec2 rand)
         {
-            float scale = exp2(float(selectCascade(pos + normal * 0.005)) - 2.0);
+            float scale = exp2(float(selectCascade(pos + normal * 0.005)) - 0.5) * 0.5;
 
             float theta = TWO_PI * rand.x;
-            vec3 dir = tbnNormal(normal) * vec3(scale * (1.0 - sqrt(1.0 - sqrt(rand.y))) * vec2(sin(theta), cos(theta)), 0.0);
+            vec3 dir = tbnNormal(normal) * vec3(scale * (0.1 - sqrt(1.0 - sqrt(rand.y))) * vec2(sin(theta), cos(theta)), 0.0);
 
-            return irradianceCache(pos + dir * min(1.0, TraceGenericRay(Ray(pos + normal * 0.003, dir), 1.0, false, false).dist - 0.001), normal, rank);
+            IrradianceSum result = irradianceCache(pos + dir * min(20.0, TraceGenericRay(Ray(pos + normal * 0.003, dir), 2.0, false, false).dist - 0.0001), normal, rank);
+            
+            return result;
         }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
     #else
-        IrradianceSum irradianceCacheSmooth (vec3 pos, vec3 normal, uint rank, vec2 rand)
-        {
-            vec3 offsetPos = pos + normal * 0.005; 
-            uint lod = selectCascade(offsetPos);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+IrradianceSum irradianceCacheSmooth (vec3 pos, vec3 normal, uint rank, vec2 rand)
+{
+    vec3 offsetPos = pos + normal * 0.005; 
+    uint lod = selectCascade(offsetPos);
+    float invScale = exp2(floor(lod - 2.0));
+    mat3 tbn = tbnNormal(normal);
 
-            float scale = exp2(floor(2.0 - lod));
-            float invScale = exp2(floor(lod - 2.0));
+    IrradianceSum result = IrradianceSum(vec3(0.0), vec3(0.0));
+    float weights = 0.0;
 
-            vec3 origin = (offsetPos + cameraMod16) * scale;
-
-            origin = (floor(origin) * 2.0 - floor(origin + 0.5) + 1.0) * invScale - (offsetPos + cameraMod16);
-
-            mat3 tbn = tbnNormal(normal);
-
-            IrradianceSum result = IrradianceSum(vec3(0.0), vec3(0.0));
-            float weights = 0.0;
-
-            for (int i = 0; i < 4; i++) {
-                vec3 offset = tbn * (invScale * vec3((i & 1) - 0.5, (i >> 1) - 0.5, 0.0));
-                offset *= min1(TraceGenericRay(Ray(offsetPos, offset), 1.0025, true, false).dist - 0.002);
-
-                IrradianceSum sampleData = irradianceCache(pos + offset, normal, rank, lod);
-
-                if (sampleData.diffuseIrradiance != vec3(0.0)) {
-                    vec3 posDiff = scale * abs(origin - offset);
-
-                    float sampleWeight = smoothstep(-0.0001, 1.0, abs(1.0 - posDiff.x)) 
-                                       * smoothstep(-0.0001, 1.0, abs(1.0 - posDiff.y)) 
-                                       * smoothstep(-0.0001, 1.0, abs(1.0 - posDiff.z));
-                                       
-                    result.diffuseIrradiance += sampleWeight * sampleData.diffuseIrradiance;
-                    result.directIrradiance += sampleWeight * sampleData.directIrradiance;
-
-                    weights += sampleWeight;
-                }
+    const float smoothRadius = 6.0;
+    const int sampleCount = 6;
+    
+    //
+    float radii[6] = float[](0.2, 0.5, 0.9, 1.4, 2.0, 2.5);
+    
+    float baseAngle = rand.x * 6.28318;
+    
+    for (int i = 0; i < sampleCount; i++) {
+        float angle = baseAngle + (float(i) * 1.0472); // 60 градусов
+        float r = radii[i] * (smoothRadius / 2.5);
+        
+        vec2 finalOffset = vec2(cos(angle), sin(angle)) * r;
+        
+        vec3 offset = tbn * (invScale * vec3(finalOffset, 0.0));
+        
+        float traceDist = TraceGenericRay(Ray(offsetPos, offset), 1.0025, true, false).dist - 0.002;
+        if (traceDist > 0.001) {
+            offset *= min1(traceDist);
+            
+            IrradianceSum sampleData = irradianceCache(pos + offset, normal, rank, lod);
+            
+            if (sampleData.diffuseIrradiance != vec3(0.0)) {
+                float distNorm = r / smoothRadius;
+                float weight = exp(-distNorm * distNorm * 2.5);
+                
+                result.diffuseIrradiance += weight * sampleData.diffuseIrradiance;
+                result.directIrradiance += weight * sampleData.directIrradiance;
+                weights += weight;
             }
-
-            float weightInv = rcp(max(0.0000000001, weights));
-
-            return IrradianceSum(
-                result.diffuseIrradiance * weightInv,
-                result.directIrradiance * weightInv
-            );
         }
+    }
+
+    if (weights > 0.0) {
+        float weightInv = 1.0 / weights;
+        result.diffuseIrradiance *= weightInv;
+        result.directIrradiance *= weightInv;
+    }
+    
+    return result;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
     #endif
 
     IrradianceSum irradianceCacheSilent (vec3 pos, vec3 normal, uint lod)
