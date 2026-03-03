@@ -95,7 +95,8 @@ void main ()
         float rayDist = 0.0;
 
         Ray specularRay;
-        specularRay.origin = rayOrigin + mat.geoNormal * 0.005;
+//////////////////////////////////////////////////////// here
+        specularRay.origin = rayOrigin + mat.geoNormal * -0.0;
 
         specularRay.direction = sampleVNDF(rayDir, mat.textureNormal, mat.roughness,
             #if NOISE_METHOD == 1
