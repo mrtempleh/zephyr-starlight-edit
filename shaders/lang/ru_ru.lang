@@ -1,7 +1,7 @@
 profile.FANCY = §9Качество
 profile.FAST  = §cБыстро
 
-option.MAIN_TITLE = [Edit] Zephyr Starlight от §9Kirilpro6284 §r| §cTemple
+option.MAIN_TITLE = Zephyr Starlight от §9Kirilpro6284
 
 value.MAIN_TITLE.0 = §dv0.2.2
 value.MAIN_TITLE.1 = §cv0.2.2
@@ -254,3 +254,4 @@ suffix.HAND_FOV               = °
 option.DEBUG_IRCACHE = Просмотр Кэша Освещения
 
 option.DEBUG_VOXELIZATION = Просмотр Вокселизации
+
