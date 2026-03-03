@@ -4,7 +4,7 @@ This work is a modification (derivative work) of the original shader.
 
 Title: Zephyr Starlight
 Author: Kirilpro6284
-Source: https://modrinth.com/shader/zephyr-starlight
+Source: https://github.com/Kirilpro6284/zephyr-starlight
 License: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
 Original license deed: https://creativecommons.org/licenses/by-nc-sa/4.0/
 
