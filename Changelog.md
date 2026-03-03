@@ -1,3 +1,8 @@
+# Edit v0.1 (v0.2.2h1)
+* Improved the quality of the irradiance cache
+* Partially removed screen space reuse
+* Fixed scale gap in reflections
+
 # v0.2.2 hotfix1
 
 Changes over v0.2.2:
