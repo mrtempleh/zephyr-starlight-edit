@@ -21,10 +21,11 @@
 
         if (weight < 0.99) {
             cache = irradianceCacheSmooth(playerPos, normal, 0u, rand);
-
+/*
             #ifdef REFLECTION_PER_PIXEL_SHADOWS
                 if (dot(normal, shadowDir) > -0.0001) cache.directIrradiance = TraceShadowRay(Ray(playerPos, sampleSunDir(shadowDir, rand)), SHADOW_MAX_RT_DISTANCE, true).rgb;
             #endif
+        */
         }
 
         return IrradianceSum(mix(cache.diffuseIrradiance / SECONDARY_GI_BRIGHTNESS, screen.diffuseIrradiance, weight), mix(cache.directIrradiance, screen.directIrradiance, weight));
