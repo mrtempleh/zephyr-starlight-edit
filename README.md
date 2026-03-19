@@ -1,4 +1,4 @@
-![screenshot](assets/2026-01-01_01.25.04.png)
+![screenshot](assets/2026-03-12_16.44.06.png)
 
 <font size="6"><h1 align = "center">⭐ zephyr-starlight-edit</h1></font>
 <font size="3"><p align = "center">Experimental real-time path traced shaderpack for Minecraft</p></font>
