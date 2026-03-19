@@ -68,7 +68,7 @@
             }
         }
 
-        return IrradianceSum(vec3(0.0), vec3(0.0));
+        return IrradianceSum(vec3(0.000075), vec3(0.0));
     }
 
     IrradianceSum irradianceCache (vec3 pos, vec3 normal, uint rank)
@@ -86,7 +86,7 @@
             float scale = exp2(float(selectCascade(pos + normal * 0.005)) - 2.0);
 
             float theta = TWO_PI * rand.x;
-            vec3 dir = tbnNormal(normal) * vec3(scale * (1.0 - sqrt(1.0 - sqrt(rand.y))) * vec2(sin(theta), cos(theta)), 0.0);
+            vec3 dir = tbnNormal(normal) * vec3(scale * (2.0 - sqrt(1.0 - sqrt(rand.y))) * vec2(sin(theta), cos(theta)), 0.0);
 
             return irradianceCache(pos + dir * min(1.0, TraceGenericRay(Ray(pos + normal * 0.003, dir), 1.0, false, false).dist - 0.001), normal, rank);
         }
@@ -117,9 +117,9 @@
                 if (sampleData.diffuseIrradiance != vec3(0.0)) {
                     vec3 posDiff = scale * abs(origin - offset);
 
-                    float sampleWeight = smoothstep(-0.0001, 1.0, abs(1.0 - posDiff.x)) 
-                                       * smoothstep(-0.0001, 1.0, abs(1.0 - posDiff.y)) 
-                                       * smoothstep(-0.0001, 1.0, abs(1.0 - posDiff.z));
+                    float sampleWeight = smoothstep(0.0001, 1.0, abs(1.0 - posDiff.x)) 
+                                       * smoothstep(0.0001, 1.0, abs(1.0 - posDiff.y)) 
+                                       * smoothstep(0.0001, 1.0, abs(1.0 - posDiff.z));
                                        
                     result.diffuseIrradiance += sampleWeight * sampleData.diffuseIrradiance;
                     result.directIrradiance += sampleWeight * sampleData.directIrradiance;
