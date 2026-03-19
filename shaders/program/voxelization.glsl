@@ -87,12 +87,12 @@
                     bool isQuad = true;
                 #endif
             #endif
-
+//
             BVHTriangle tri = BVHTriangle 
             (
-                vsout[1].vertexPosition - 0.001 * (tangent + bitangent),
-                tangent * 1.002,
-                bitangent * 1.002,
+                vsout[1].vertexPosition - 0.0 * (tangent + bitangent),
+                tangent * 1.0,
+                bitangent * 1.0,
                 vsout[2].texcoord, 
                 vsout[0].texcoord, 
                 vsout[1].texcoord,
@@ -104,7 +104,7 @@
                 !doBackFaceCull,
                 renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT
             );
-
+//
             uint hash = getTextureHash();
             ivec2 texSize = textureSize(gtexture, 0);
             uint texOffset;
