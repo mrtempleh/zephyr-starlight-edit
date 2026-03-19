@@ -8,7 +8,7 @@
 * Improoved Optimisation
 * Russian Language, more comfortable settings menu
 * Improved Refractions
-* Improved IrradianceChace
+* Improved IrradianceCache
 * Voxelisation Fixes
 
 # Information
