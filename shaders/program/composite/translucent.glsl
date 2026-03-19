@@ -157,29 +157,27 @@ void main ()
                         } else {
 //
                             vec2 dither = blueNoise(vec2(texel)).rg;
-
-                            // IrradianceCache data
-                            IrradianceSum cacheData;
+                            // IrCache data
+                            IrradianceSum r;
                             #if SMOOTH_IRCACHE == 1 || SMOOTH_IRCACHE == 2
-                                cacheData = irradianceCacheSmooth(hitPos, ref.normal, 0u, dither);
+                                r = irradianceCacheSmooth(hitPos, ref.normal, 0u, dither);
                             #else
-                                cacheData = irradianceCache(hitPos, ref.normal, 0u);
+                                r = irradianceCache(hitPos, ref.normal, 0u);
                             #endif
-
-                            // REFLECTION_PER_PIXEL_SHADOWS
+                            // Per Pixel Shadows
                             #ifdef REFLECTION_PER_PIXEL_SHADOWS
                                 if (dot(ref.normal, shadowDir) > -0.0001) {
-                                    // trace direct  ray
+                                    // Трассируем тень
                                     vec3 shadowRayDir = sampleSunDir(shadowDir, dither);
-                                    cacheData.directIrradiance = TraceShadowRay(Ray(hitPos, shadowRayDir), SHADOW_MAX_RT_DISTANCE, true).rgb;
+                                    r.directIrradiance = TraceShadowRay(Ray(hitPos, shadowRayDir), SHADOW_MAX_RT_DISTANCE, true).rgb;
                                 }
                             #endif
 
                             refractedRadiance += throughput * (
                                 (ref.sssAmount > 0.005 ? 0.01 * ref.sssAmount * subsurfaceScattering(hitPos, ref.albedo.rgb, dot(shadowDir, refractRay.direction), dither) : vec3(0.0)) +
                                 ref.albedo.rgb * ref.emission + 
-                                ref.albedo.rgb * cacheData.diffuseIrradiance + 
-                                lightTransmittance(shadowDir) * shadowLightBrightness * cacheData.directIrradiance * evalCookBRDF(normalize(shadowDir + ref.normal * 0.03125), refractRay.direction, ref.roughness, ref.normal, ref.albedo.rgb, ref.F0)
+                                ref.albedo.rgb * r.diffuseIrradiance + 
+                                lightTransmittance(shadowDir) * shadowLightBrightness * r.directIrradiance * evalCookBRDF(normalize(shadowDir + ref.normal * 0.03125), refractRay.direction, ref.roughness, ref.normal, ref.albedo.rgb, ref.F0)
                             );
                             break;
 //
