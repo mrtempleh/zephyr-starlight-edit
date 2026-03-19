@@ -1,0 +1,247 @@
+profile.FANCY = §9Качественный
+profile.FAST  = §cБыстрый
+
+option.MAIN_TITLE = Zephyr Starlight by §9Kirilpro6284
+
+value.MAIN_TITLE.0 = §dv0.2.2
+value.MAIN_TITLE.1 = §cv0.2.2
+value.MAIN_TITLE.2 = §6v0.2.2
+value.MAIN_TITLE.3 = §ev0.2.2
+value.MAIN_TITLE.4 = §av0.2.2
+value.MAIN_TITLE.5 = §bv0.2.2
+value.MAIN_TITLE.6 = §9v0.2.2
+value.MAIN_TITLE.7 = §5v0.2.2
+
+screen.PATH_TRACING    = Трассировка пути
+screen.ATMOSPHERICS    = Атмосфера и освещение
+screen.TERRAIN         = Ландшафт и блоки
+screen.ANTIALIASING    = Сглаживание
+screen.POST_PROCESSING = Пост-обработка
+screen.MISC            = Разное / Отладка
+
+screen.PT_VOXELIZATION = Вокселизация
+screen.PT_IRCACHE      = Кэш освещения
+
+screen.PT_DIFFUSE    = Основное освещение
+screen.PT_REFLECTION = Отражения
+screen.PT_SHADOW     = Тени
+screen.PT_DENOISING  = Денойзер
+
+screen.PT_SPATIAL_FILTER  = Пространственный фильтр
+screen.PT_TEMPORAL_FILTER = Временной фильтр
+
+option.SMOOTH_IRCACHE    = Сглаживание кэша освещения
+option.NOISE_METHOD      = Метод шума
+
+value.SMOOTH_IRCACHE.0 = Выкл
+value.SMOOTH_IRCACHE.1 = Быстро
+value.SMOOTH_IRCACHE.2 = Качественно
+
+value.NOISE_METHOD.0 = Белый шум
+value.NOISE_METHOD.1 = Синий шум
+
+option.DIFFUSE_SAMPLES               = Сэмплов на пиксель
+option.DIFFUSE_MAX_RT_DISTANCE       = Дальность трассировки
+option.PT_DIFFUSE_ACCUMULATION_LIMIT = Лимит накопленных кадров
+option.DIFFUSE_DENOISE_PASSES        = Проходов денойзера
+option.SAMPLING_METHOD               = Метод сэмплирования
+
+value.SAMPLING_METHOD.0              = Равномерный
+value.SAMPLING_METHOD.1              = Взвешенный по косинусу
+
+option.SECONDARY_GI_BRIGHTNESS       = Яркость вторичного GI
+option.MINIMUM_LIGHT                 = Минимальное освещение
+option.SUNLIGHT_GI_QUALITY           = Качество GI от солнца
+
+value.SUNLIGHT_GI_QUALITY.0          = Низкое
+value.SUNLIGHT_GI_QUALITY.1          = Среднее
+value.SUNLIGHT_GI_QUALITY.2          = Высокое
+
+option.DIFFUSE_FILTER_QUALITY        = Качество денойзера
+
+value.DIFFUSE_FILTER_QUALITY.0       = Низкое
+value.DIFFUSE_FILTER_QUALITY.1       = Высокое
+
+option.REFLECTION_SAMPLES               = Сэмплов на пиксель
+option.REFLECTION_MAX_RT_DISTANCE       = Дальность трассировки
+option.PT_REFLECTION_ACCUMULATION_LIMIT = Лимит накопленных кадров
+option.REFLECTION_ROUGHNESS_THRESHOLD   = Порог шероховатости
+option.REFLECTION_BOUNCES               = Количество отскоков
+option.REFLECTION_PER_PIXEL_SHADOWS     = Тени на пиксель
+option.REFLECTION_SS_REUSE              = Переиспользование экранных данных
+
+option.SHADOW_SAMPLES               = Сэмплов на пиксель
+option.SHADOW_MAX_RT_DISTANCE       = Дальность трассировки
+option.PT_SHADOW_ACCUMULATION_LIMIT = Лимит накопленных кадров
+option.SHADOW_SOFTNESS              = Мягкость теней
+option.SHADOW_SKIP_CLIPPING         = Пропускать клиппинг
+
+option.DIFFUSE_HALF_RES    = Трассировка в половинном разрешении
+option.REFLECTION_HALF_RES = Трассировка в половинном разрешении
+option.SHADOW_HALF_RES     = Трассировка в половинном разрешении
+
+option.DENOISER_DEPTH_WEIGHT     = Вес глубины
+option.DENOISER_NORMAL_WEIGHT    = Вес нормалей
+option.DENOISER_INTENSITY_WEIGHT = Вес интенсивности
+
+option.TEMPORAL_PREFILTERING      = Временная предфильтрация
+option.TEMPORAL_NORMAL_TOLERANCE  = Допуск по нормалям
+
+option.DENOISER_VARIANCE_GUIDE    = Направление по вариативности
+
+option.IRCACHE_VOXEL_ARRAY_SIZE = Размер воксельного массива
+option.IRCACHE_PROBE_ATTEMPTS   = Количество проб
+option.IRCACHE_CASCADE_RES      = Разрешение каскадов
+option.IRCACHE_MAX_RT_DISTANCE  = Дальность трассировки
+option.IRCACHE_SAMPLES          = Количество сэмплов
+option.IRCACHE_BLEND_WEIGHT     = Вес смешивания
+
+suffix.IRCACHE_CASCADE_RES      = ³
+
+option.VOXELIZATION_DISTANCE   = Дистанция вокселизации
+option.entityShadowDistanceMul = Множитель дистанции для сущностей
+
+suffix.entityShadowDistanceMul = x
+
+option.VOXELIZE_ENTITIES       = Вокселизировать сущности
+option.VOXELIZE_BLOCK_ENTITIES = Вокселизировать блоки-сущности
+option.VOXELIZE_PLAYER         = Вокселизировать игрока
+option.VOXELIZE_ITEMS          = Вокселизировать предметы
+
+screen.VOXEL_ADVANCED = Продвинутые настройки
+
+option.VOXEL_ARRAY_SIZE     = Размер воксельного массива
+option.VOXEL_PROBE_ATTEMPTS = Количество проб
+option.shadowMapResolution  = Макс. размер текстур сущностей
+suffix.shadowMapResolution  = ²
+option.TEXTURE_HASH_ENTRIES = Записей хэша текстур
+option.TRIANGLE_ARRAY_SIZE  = Размер массива треугольников
+
+option.sunPathRotation      = Вращение пути солнца
+option.SUN_AZIMUTH_ROTATION = Азимут солнца
+option.SUN_SIZE             = Размер солнца
+
+option.SKY_MIE          = Количество Mie
+option.SKY_OZONE        = Количество озона
+option.SKY_RAYLEIGH_R   = Рэлей R
+option.SKY_RAYLEIGH_G   = Рэлей G
+option.SKY_RAYLEIGH_B   = Рэлей B
+option.NIGHT_BRIGHTNESS = Яркость ночи
+option.SKY_MULTISCATTER = Многократное рассеивание
+
+screen.VOLUMETRIC_LIGHT = Объемный свет
+
+option.VL_ENABLED       = Включен
+option.VL_STEP_COUNT    = Количество шагов
+option.VL_INTENSITY     = Интенсивность
+option.VL_INTENSITY_DAY = Интенсивность днем
+option.VL_DENSITY       = Плотность тумана
+option.VL_DISTANCE      = Макс. дистанция
+
+screen.SUBSURFACE_SCATTERING = Подповерхностное рассеивание
+
+option.SSS_ENABLED       = Включено
+option.SSS_STEP_COUNT    = Количество шагов
+option.SSS_INTENSITY     = Интенсивность
+option.SSS_ABSORPTION    = Поглощение
+option.SSS_RADIUS        = Радиус ядра
+option.SSS_PHASE         = Фазовая функция
+
+option.NORMAL_MAPPING         = Нормал-маппинг
+option.SPECULAR_MAPPING       = Спекуляр-маппинг
+option.GLASS_REFRACTION       = Рефракция на стекле
+option.WATER_REFRACTION       = Рефракция на воде
+option.REFRACTION_BOUNCES     = Отскоков рефракции
+option.GLASS_IOR              = Коэф. преломления стекла
+option.GLASS_REFLECTANCE      = Отражательная способность стекла
+option.GLASS_OPACITY          = Непрозрачность стекла
+option.WATER_ABSORPTION_R     = Поглощение воды R
+option.WATER_ABSORPTION_G     = Поглощение воды G
+option.WATER_ABSORPTION_B     = Поглощение воды B
+option.WATER_REFLECTANCE      = Отражательная способность воды
+
+screen.TERRAIN_REFRACTION      = Рефракция
+
+screen.TERRAIN_POM             = Параллакс-маппинг
+
+option.POM                     = Включен
+option.POM_DEPTH               = Глубина
+option.POM_STEPS               = Шагов
+option.POM_TEXTURE_RES         = Разрешение текстур
+
+screen.TERRAIN_IPBR            = Встроенный PBR
+
+option.IPBR                    = Жестко заданная Specular
+option.EMISSION_BRIGHTNESS     = Яркость эмиссии
+option.GLOWING_ORES            = Светящиеся руды
+option.GLOWING_CONCRETE_POWDER = Светящийся цемент
+option.GLOWING_REDSTONE_BLOCK  = Светящийся редстоун
+option.GLOWING_LAPIS_BLOCK     = Светящийся лазурит
+option.GLOWING_ARMOR_TRIMS     = Светящиеся узоры брони
+option.MIRROR_PACKED_ICE       = Зеркальный уплотненный лед
+
+screen.TERRAIN_WATER           = Вода
+
+option.WATER_WAVE_HEIGHT       = Высота волн
+option.WATER_WAVE_FREQUENCY    = Частота волн
+option.WATER_WAVE_SPEED        = Скорость волн
+option.WATER_WAVE_TURBULENCE   = Турбулентность
+
+option.WATER_REFRACTED_CAUSTICS = Преломленные каустики
+option.WATER_REFLECTED_CAUSTICS = Отраженные каустики
+option.WATER_CAUSTICS_STRENGTH  = Сила каустик
+
+option.TAA                     = TAA
+option.TAA_UPSCALING_FACTOR    = Темпоральный апскейлинг
+
+value.TAA_UPSCALING_FACTOR.25  = 25% не рекомендуется
+value.TAA_UPSCALING_FACTOR.33  = 33% не рекомендуется
+value.TAA_UPSCALING_FACTOR.100 = 100% выкл
+
+suffix.TAA_UPSCALING_FACTOR    = %
+
+option.TAA_JITTER_SCALE       = Масштаб джиттера
+option.TAA_BLEND_WEIGHT       = Вес смешивания
+option.TAA_OFFCENTER_WEIGHT   = Отбраковка смещенных
+option.TAA_VARIANCE_WEIGHT    = Отбраковка по вариативности
+option.TAA_MIP_SCALE          = Масштаб MIP-уровней
+option.SHARPENING             = Резкость
+
+option.TAA_REFLECTION_DEPTH   = Перепроецирование отражений
+option.TAA_HISTORY_SAMPLING   = Сэмплирование истории
+
+value.TAA_HISTORY_SAMPLING.0  = Catmull-Rom
+value.TAA_HISTORY_SAMPLING.1  = Билинейное
+
+option.DYNAMIC_EXPOSURE             = Динамическая экспозиция
+option.ADAPTATION_SPEED             = Скорость адаптации
+option.MANUAL_EXPOSURE              = Ручная экспозиция
+option.BRIGHTNESS                   = Яркость
+option.CHROMATIC_ABERRATION         = Хроматическая аберрация
+option.CHROMATIC_ABERRATION_SAMPLES = Сэмплов аберрации
+
+option.MOTION_BLUR                  = Размытие в движении
+option.MOTION_BLUR_STRENGTH         = Сила размытия
+option.MOTION_BLUR_SAMPLES          = Сэмплов размытия
+
+option.DEPTH_OF_FIELD               = Глубина резкости
+option.APERTURE_SIZE                = Размер апертуры
+option.DOF_SAMPLES                  = Сэмплов
+option.DOF_FOCUS_MODE               = Режим фокуса
+option.DOF_FOCUS_DISTANCE           = Дистанция фокуса
+
+option.BLOOM                        = Блум
+option.BLOOM_STRENGTH               = Сила блума
+
+value.DOF_FOCUS_MODE.0              = Авто
+value.DOF_FOCUS_MODE.1              = Вручную
+
+option.HAND_FOV               = FOV руки
+option.DISABLE_DENOISING      = Отключить денойзинг
+option.FORCE_TRIANGLE_TRACING = Принудительная трассировка треугольников
+
+value.HAND_FOV.0              = Обычное
+suffix.HAND_FOV               = °
+
+option.DEBUG_IRCACHE = Показать кэш освещения
+option.DEBUG_VOXELIZATION = Показать вокселизацию
