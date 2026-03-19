@@ -1,19 +1,22 @@
 ![screenshot](assets/2026-01-01_01.25.04.png)
-<sub><sup>Resource pack used: AVPBR Retextured R5</sup></sub>
 
-<font size="6"><h1 align = "center">⭐ zephyr-starlight</h1></font>
+<font size="6"><h1 align = "center">⭐ zephyr-starlight-edit</h1></font>
 <font size="3"><p align = "center">Experimental real-time path traced shaderpack for Minecraft</p></font>
 
-> [!WARNING]
-> Disclaimer: This shaderpack is an early work-in-progress so 
-> bugs, missing features and performance issues are to be expected.
+# Changes 1.0
+
+* Improoved Optimisation
+* Russian Language, more comfortable settings menu
+* Improved Refractions
+* Improved IrradianceChace
+* Voxelisation Fixes
 
 # Information
 
-* Download: https://modrinth.com/shader/zephyr-starlight
+* Original Download: https://modrinth.com/shader/zephyr-starlight
 * Minecraft 1.21+ and Iris 1.9+ is recommended. OptiFine is not supported
 * For suggestions, ideas and discussions related to this shaderpack, head over to the `#zephyr-starlight-kirilpro` channel in the [shaderLABS](https://discord.gg/RpzWN9S) Discord server.
-* You can support me by becoming a patron: https://www.patreon.com/Kirilpro6284
+* You can support kirilpro by becoming a patron: https://www.patreon.com/Kirilpro6284
 
 ## Features
 
@@ -56,15 +59,12 @@
 
 ## TODO / Known Issues
 
-* ~~TAAU looks *very* bad currently. I don't recommend using it unless you really need FPS.~~
-* ~~Currently, you need a labPBR resource pack enabled for this shaderpack to function properly.~~
 * Rain particles are not rendered.
 * Reflections (especially mirror-like ones) show a lot of noise and flickering. Lowering Irradiance Cache -> Update Interval and increasing reflection samples in path tracing settings can improve it.
 * The shaderpack takes very long to load on first use, but it should be faster on subsequent loads.
 * Normal maps don't show up in reflections.
 * Breaking blocks in caves shows light leaking for a split second. This is unavoidable now.
 * In some cases, parts of the terrain will fail to voxelize. Increasing Triangle and Voxel Array Size usually fixes it.
-* ~~TAA produces a lot of ghosting on smooth reflections in movement. It might be possible to improve on this by using a reflection virtual depth buffer for TAA reprojection.~~
 
 ## License
 
