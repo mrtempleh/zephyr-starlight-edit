@@ -86,7 +86,7 @@
             float scale = exp2(float(selectCascade(pos + normal * 0.005)) - 2.0);
 
             float theta = TWO_PI * rand.x;
-            vec3 dir = tbnNormal(normal) * vec3(scale * (2.0 - sqrt(1.0 - sqrt(rand.y))) * vec2(sin(theta), cos(theta)), 0.0);
+            vec3 dir = tbnNormal(normal) * vec3(scale * (0.5 - sqrt(1.0 - sqrt(rand.y))) * vec2(sin(theta), cos(theta)), 0.0) * 16;
 
             return irradianceCache(pos + dir * min(1.0, TraceGenericRay(Ray(pos + normal * 0.003, dir), 1.0, false, false).dist - 0.001), normal, rank);
         }
