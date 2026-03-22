@@ -10,6 +10,7 @@
 * Improved Refractions
 * Improved IrradianceCache
 * Voxelisation Fixes
+* Reflection Fixes
 
 # Information
 
